@@ -66,7 +66,7 @@ export default function ConfiguratorClient() {
     const [size, setSize] = useState('40x60');
     const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
     const [viewMode, setViewMode] = useState<'workspace' | '3d'>('workspace');
-
+    const [zoom, setZoom] = useState(1);
     const [elements, setElements] = useState<ConfigElement[]>([]);
     const [background, setBackground] = useState<string>('#ffffff');
     const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -202,7 +202,7 @@ export default function ConfiguratorClient() {
         // but we can track coordinates if we want to save them.
         setElements(prev => prev.map(el => {
             if (el.id === id) {
-                return { ...el, x: el.x + info.offset.x, y: el.y + info.offset.y };
+                return { ...el, x: el.x + info.offset.x / zoom, y: el.y + info.offset.y / zoom };
             }
             return el;
         }));
@@ -212,6 +212,14 @@ export default function ConfiguratorClient() {
 
     const handleTextChange = (id: string, newText: string) => {
         setElements(elements.map(el => el.id === id ? { ...el, content: newText } : el));
+    };
+
+    const handleWheel = (e: React.WheelEvent) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            setZoom(prev => Math.min(Math.max(0.5, prev + delta), 3));
+        }
     };
 
     const updateElementStyle = (id: string, property: keyof ConfigElement, value: any) => {
@@ -309,7 +317,6 @@ export default function ConfiguratorClient() {
 
     useEffect(() => {
         if (viewMode === '3d') {
-            // Give it a moment to mount and initialize the ref
             const timer = setTimeout(update3DTexture, 500);
             return () => clearTimeout(timer);
         }
@@ -1094,12 +1101,43 @@ export default function ConfiguratorClient() {
             {/* Image Edit Panel (shared for uploaded and vectors) */}
 
             {/* Main Canvas Area */}
-            <main style={{ flex: 1, background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+            <main
+                onClick={() => { setSelectedId(null); setActiveTool(null); }}
+                onWheel={handleWheel}
+                style={{
+                    flex: 1,
+                    background: '#f1f5f9',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'auto',
+                    padding: '100px' // Overscroll area
+                }}
+            >
+                {/* Zoom Controls */}
+                <div style={{
+                    position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+                    background: 'white', padding: '0.5rem', borderRadius: '12px',
+                    display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    zIndex: 200, border: '1px solid var(--border)'
+                }}>
+                    <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} style={{ padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', border: '1px solid #e2e8f0' }}><Minus size={16} /></button>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, minWidth: '3.5rem', textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(prev => Math.min(3, prev + 0.1))} style={{ padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', border: '1px solid #e2e8f0' }}><Plus size={16} /></button>
+                    <div style={{ width: '1px', height: '24px', background: '#e2e8f0' }} />
+                    <button onClick={() => setZoom(1)} style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'var(--accent)', border: 'none', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>RESET</button>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>Ctrl + Scroll</div>
+                </div>
+
                 <div
                     ref={canvasRef}
                     style={{
                         width: orientation === 'landscape' ? '600px' : '400px',
                         height: orientation === 'landscape' ? '400px' : '600px',
+                        transform: `scale(${zoom})`,
+                        transformOrigin: 'center center',
                         background: viewMode === 'workspace'
                             ? (background.startsWith('data:') || background.startsWith('http') ? `url(${background})` : background)
                             : 'white',
@@ -1255,7 +1293,6 @@ export default function ConfiguratorClient() {
                                 shadow-intensity="1"
                                 camera-controls
                                 auto-rotate
-                                ar
                                 tone-mapping="neutral"
                                 style={{ width: '100%', height: '100%', background: '#f8fafc' }}
                             />
@@ -1276,11 +1313,6 @@ export default function ConfiguratorClient() {
                 </div>
             </main>
 
-            {/* Click outside to deselect */}
-            <div
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'auto', zIndex: 0 }}
-                onClick={() => { setSelectedId(null); setActiveTool(null); }}
-            />
 
             {/* Product Options */}
             <aside style={{ width: '320px', borderLeft: '1px solid var(--border)', padding: '1.5rem', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
@@ -1330,22 +1362,39 @@ export default function ConfiguratorClient() {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Dimensiune (cm)</label>
+                    <select
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
+                    >
+                        <option value="20x30">20x30 cm</option>
+                        <option value="30x40">30x40 cm</option>
+                        <option value="40x60">40x60 cm</option>
+                        <option value="50x70">50x70 cm</option>
+                        <option value="70x100">70x100 cm</option>
+                    </select>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Previzualizare</label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {/* 3D Preview Box */}
-                        <div
-                            onClick={() => setViewMode('3d')}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setViewMode('3d'); }}
                             style={{
+                                width: '100%',
                                 height: '140px',
+                                padding: 0,
                                 background: '#f1f5f9',
                                 borderRadius: '12px',
                                 overflow: 'hidden',
                                 cursor: 'pointer',
-                                border: viewMode === '3d' ? '2px solid var(--primary)' : '2px solid #e2e8f0',
+                                border: viewMode === '3d' ? '3px solid var(--primary)' : '2px solid #e2e8f0',
                                 position: 'relative',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s',
+                                boxShadow: viewMode === '3d' ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none'
                             }}
-                            className="group hover:border-primary"
                         >
                             <model-viewer
                                 key={`sidebar-3d-${orientation}`}
@@ -1360,17 +1409,20 @@ export default function ConfiguratorClient() {
                                 position: 'absolute', bottom: 8, right: 8,
                                 background: 'white', padding: '4px 8px', borderRadius: '4px',
                                 fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                color: 'var(--foreground)'
                             }}>
-                                <Box size={12} /> 3D PREVIEW
+                                <Box size={12} /> VIZUALIZARE 3D
                             </div>
-                        </div>
+                        </button>
 
                         {/* 2D Mini Preview */}
-                        <div
-                            onClick={() => setViewMode('workspace')}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setViewMode('workspace'); }}
                             style={{
+                                width: '100%',
                                 height: '80px',
+                                padding: 0,
                                 background: background.startsWith('#') ? background : '#ffffff',
                                 backgroundImage: !background.startsWith('#') ? `url(${background})` : 'none',
                                 backgroundSize: 'cover',
@@ -1378,21 +1430,21 @@ export default function ConfiguratorClient() {
                                 borderRadius: '12px',
                                 overflow: 'hidden',
                                 cursor: 'pointer',
-                                border: viewMode === 'workspace' ? '2px solid var(--primary)' : '2px solid #e2e8f0',
+                                border: viewMode === 'workspace' ? '3px solid var(--primary)' : '2px solid #e2e8f0',
                                 position: 'relative',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s',
+                                boxShadow: viewMode === 'workspace' ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none'
                             }}
-                            className="hover:border-primary"
                         >
                             <div style={{ transform: 'scale(0.15)', pointerEvents: 'none', position: 'relative', width: orientation === 'landscape' ? '600px' : '400px', height: orientation === 'landscape' ? '400px' : '600px' }}>
                                 {elements.map(el => (
                                     <div key={el.id} style={{
                                         position: 'absolute',
-                                        left: el.x + 20,
-                                        top: el.y + 20,
+                                        left: (el.x + 20),
+                                        top: (el.y + 20),
                                         width: '100px',
                                         height: '20px',
                                         background: el.color || '#cbd5e1',
@@ -1405,11 +1457,12 @@ export default function ConfiguratorClient() {
                                 position: 'absolute', bottom: 8, right: 8,
                                 background: 'white', padding: '4px 8px', borderRadius: '4px',
                                 fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                color: 'var(--foreground)'
                             }}>
-                                <Eye size={12} /> NORMAL (2D)
+                                <Eye size={12} /> EDITOR (2D)
                             </div>
-                        </div>
+                        </button>
                     </div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
