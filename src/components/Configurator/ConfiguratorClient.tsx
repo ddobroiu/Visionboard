@@ -95,6 +95,7 @@ export default function ConfiguratorClient() {
     const [isSearchingVectors, setIsSearchingVectors] = useState(false);
     const [vectorPage, setVectorPage] = useState(1);
     const [vectorError, setVectorError] = useState<string | null>(null);
+    const [showMobileSettings, setShowMobileSettings] = useState(false);
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean, elementId: string | null }>({
@@ -1328,13 +1329,13 @@ export default function ConfiguratorClient() {
                     justifyContent: 'center',
                     position: 'relative',
                     overflow: 'auto',
-                    padding: '100px', // Overscroll area
-                    paddingLeft: '400px', // Reserve space for 80px sidebar + 300px tool panel + some breathing room
+                    padding: isMobile ? '1rem' : '100px',
+                    paddingLeft: isMobile ? 0 : '400px',
                 }}
             >
                 {/* Zoom Controls */}
                 <div style={{
-                    position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+                    position: 'absolute', bottom: isMobile ? '80px' : '2rem', left: '50%', transform: 'translateX(-50%)',
                     background: 'white', padding: '0.5rem', borderRadius: '12px',
                     display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
                     zIndex: 200, border: '1px solid var(--border)'
@@ -1550,8 +1551,48 @@ export default function ConfiguratorClient() {
 
 
             {/* Product Options */}
-            <aside style={{ width: '320px', borderLeft: '1px solid var(--border)', padding: '1.5rem', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 600 }}>Configurare Produs</h2>
+                        {isMobile && (
+                <>
+                    {/* Floating 3D Toggle */}
+                    <button
+                        onClick={() => setViewMode(viewMode === 'workspace' ? '3d' : 'workspace')}
+                        style={{
+                            position: 'absolute', top: '1rem', right: '1rem',
+                            background: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
+                            zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
+                        }}
+                    >
+                        <Box size={16} /> {viewMode === 'workspace' ? 'Vezi 3D' : 'Vezi 2D'}
+                    </button>
+
+                    {/* Floating Settings/Order Button (bottom right above zoom) */}
+                    <button
+                        onClick={() => setShowMobileSettings(true)}
+                        style={{
+                            position: 'absolute', top: '1rem', right: '110px',
+                            background: 'var(--primary)', color: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none',
+                            zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
+                        }}
+                    >
+                        <ShoppingCart size={16} /> Comandă
+                    </button>
+                    
+                     {/* Overlay for Settings */}
+                    {showMobileSettings && (
+                        <div 
+                            onClick={() => setShowMobileSettings(false)}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
+                        />
+                    )}
+                </>
+            )}
+, borderLeft: '1px solid var(--border)', padding: '1.5rem', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+                
+                {isMobile && (
+                   <button onClick={() => setShowMobileSettings(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none' }}><X /></button>
+                )}
 
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Material</label>
@@ -1811,6 +1852,9 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
+
+
 
 
 
