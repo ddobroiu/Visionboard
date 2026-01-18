@@ -16,6 +16,16 @@ export interface ConfigElement {
     maskShape?: 'rect' | 'circle' | 'heart' | 'star' | 'hexagon';
     rotation?: number;
     effect?: 'none' | 'shadow' | 'lift' | 'hollow' | 'splice' | 'echo' | 'glitch' | 'neon' | '3d';
+    // Filters
+    filters?: {
+        brightness?: number;
+        contrast?: number;
+        grayscale?: number;
+        sepia?: number;
+        blur?: number;
+        hueRotate?: number;
+        saturate?: number;
+    };
 }
 
 export const FONTS = [

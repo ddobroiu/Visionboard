@@ -108,13 +108,15 @@ export function useLibrarySearch(activeTool: string | null) {
 
     return {
         pixabayQuery, setPixabayQuery,
-        pixabayResults, isSearching,
+        pixabayResults, setPixabayResults,
+        isSearching,
         pixabayTransparent, setPixabayTransparent,
         pixabayOrientation, setPixabayOrientation,
         pixabayPage, setPixabayPage,
         pixabayError,
         vectorQuery, setVectorQuery,
-        vectorResults, isSearchingVectors,
+        vectorResults, setVectorResults,
+        isSearchingVectors,
         vectorPage, setVectorPage,
         vectorError,
         activeLibraryCategory, setActiveLibraryCategory,

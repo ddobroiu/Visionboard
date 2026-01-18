@@ -103,7 +103,7 @@ export function use3DPreview(
                             const x = cx + rad * Math.cos(angle - Math.PI / 2);
                             const y = cy + rad * Math.sin(angle - Math.PI / 2);
                             if (i === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, i === 0 ? 0 : y); // Wait, small error in prev logic maybe? Fixed below.
+                            else ctx.lineTo(x, y);
                         }
                         ctx.closePath();
                         ctx.clip();
@@ -123,6 +123,17 @@ export function use3DPreview(
                         dy = -dh / 2;
                     }
 
+                    if (el.filters) {
+                        ctx.filter = [
+                            el.filters.brightness !== undefined ? `brightness(${el.filters.brightness})` : '',
+                            el.filters.contrast !== undefined ? `contrast(${el.filters.contrast})` : '',
+                            el.filters.saturate !== undefined ? `saturate(${el.filters.saturate})` : '',
+                            el.filters.grayscale !== undefined ? `grayscale(${el.filters.grayscale})` : '',
+                            el.filters.sepia !== undefined ? `sepia(${el.filters.sepia})` : '',
+                            el.filters.blur !== undefined ? `blur(${el.filters.blur * scale}px)` : '',
+                        ].join(' ');
+                    }
+
                     if (el.color) {
                         const tCanvas = document.createElement('canvas');
                         tCanvas.width = img.width; tCanvas.height = img.height;
@@ -133,6 +144,7 @@ export function use3DPreview(
                     } else {
                         ctx.drawImage(img, dx, dy, dw, dh);
                     }
+                    ctx.filter = 'none';
                 }
                 ctx.restore();
             }

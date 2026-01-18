@@ -38,3 +38,32 @@ export async function POST(req: Request) {
         return new NextResponse('Internal Error', { status: 500 });
     }
 }
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const isPublic = searchParams.get('public') === 'true';
+        const session = await getAuthSession();
+
+        let whereClause: any = { source: "Visionboard" };
+
+        if (isPublic) {
+            whereClause.isPublic = true;
+        } else {
+            if (!session?.user?.email) {
+                return new NextResponse('Unauthorized', { status: 401 });
+            }
+            whereClause.userId = (session.user as any).id;
+        }
+
+        const designs = await prisma.design.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return NextResponse.json(designs);
+    } catch (error) {
+        console.error('[DESIGNS_GET]', error);
+        return new NextResponse('Internal Error', { status: 500 });
+    }
+}

@@ -138,38 +138,50 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({
                         {el.content}
                     </div>
                 ) : (
-                    el.color ? (
-                        <div style={{
-                            width: '200px', height: '200px', backgroundColor: el.color,
-                            WebkitMaskImage: `url(${el.content})`, maskImage: `url(${el.content})`,
-                            WebkitMaskSize: 'contain', maskSize: 'contain',
-                            WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-                            WebkitMaskPosition: 'center', maskPosition: 'center',
-                            clipPath: (el.maskShape === 'circle') ? 'circle(50%)' :
-                                (el.maskShape === 'heart') ? 'path("M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")' :
-                                    (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
-                                        (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
-                        }} />
-                    ) : (
-                        <img
-                            src={el.content}
-                            alt="uploaded"
-                            draggable="false"
-                            style={{
-                                width: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
-                                height: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
-                                maxWidth: '300px',
-                                display: 'block',
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                                objectFit: 'cover',
-                                clipPath: (el.maskShape === 'circle') ? 'circle(50% at 50% 50%)' :
-                                    (el.maskShape === 'heart') ? 'path("M100 171.6L20.8 88.3C4.2 71.1 0 49.3 0 29.5 0 9.7 13.1 0 29.1 0 45.1 0 54.5 11.8 62.5 24.1 70.3 36.4 74.3 43.1 82.5 43.1S94.7 36.4 102.5 24.1C110.5 11.8 119.9 0 135.9 0 151.8 0 165 9.7 165 29.5 165 49.3 160.8 71.1 144.2 88.3L65 171.6")' :
+                    <div style={{
+                        filter: el.filters ? [
+                            el.filters.brightness !== undefined ? `brightness(${el.filters.brightness})` : '',
+                            el.filters.contrast !== undefined ? `contrast(${el.filters.contrast})` : '',
+                            el.filters.saturate !== undefined ? `saturate(${el.filters.saturate})` : '',
+                            el.filters.grayscale !== undefined ? `grayscale(${el.filters.grayscale})` : '',
+                            el.filters.sepia !== undefined ? `sepia(${el.filters.sepia})` : '',
+                            el.filters.blur !== undefined ? `blur(${el.filters.blur}px)` : '',
+                            el.filters.hueRotate !== undefined ? `hue-rotate(${el.filters.hueRotate}deg)` : '',
+                        ].join(' ') : 'none'
+                    }}>
+                        {el.color ? (
+                            <div style={{
+                                width: '200px', height: '200px', backgroundColor: el.color,
+                                WebkitMaskImage: `url(${el.content})`, maskImage: `url(${el.content})`,
+                                WebkitMaskSize: 'contain', maskSize: 'contain',
+                                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                                WebkitMaskPosition: 'center', maskPosition: 'center',
+                                clipPath: (el.maskShape === 'circle') ? 'circle(50%)' :
+                                    (el.maskShape === 'heart') ? 'path("M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")' :
                                         (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
                                             (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
-                            }}
-                        />
-                    )
+                            }} />
+                        ) : (
+                            <img
+                                src={el.content}
+                                alt="uploaded"
+                                draggable="false"
+                                style={{
+                                    width: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
+                                    height: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
+                                    maxWidth: '300px',
+                                    display: 'block',
+                                    pointerEvents: 'none',
+                                    userSelect: 'none',
+                                    objectFit: 'cover',
+                                    clipPath: (el.maskShape === 'circle') ? 'circle(50% at 50% 50%)' :
+                                        (el.maskShape === 'heart') ? 'path("M100 171.6L20.8 88.3C4.2 71.1 0 49.3 0 29.5 0 9.7 13.1 0 29.1 0 45.1 0 54.5 11.8 62.5 24.1 70.3 36.4 74.3 43.1 82.5 43.1S94.7 36.4 102.5 24.1C110.5 11.8 119.9 0 135.9 0 151.8 0 165 9.7 165 29.5 165 49.3 160.8 71.1 144.2 88.3L65 171.6")' :
+                                            (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                                (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
+                                }}
+                            />
+                        )}
+                    </div>
                 )}
             </div>
         </motion.div>

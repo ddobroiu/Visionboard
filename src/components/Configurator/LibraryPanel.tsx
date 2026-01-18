@@ -38,6 +38,9 @@ interface LibraryPanelProps {
     performPixabaySearch: (query: string, isLoadMore: boolean, pageNum: number, type?: string) => void;
     setVectorPage: (v: number) => void;
     setPixabayPage: (v: number) => void;
+    savedDesigns: any[];
+    isLoadingSaved: boolean;
+    fetchDesigns: (isPublic?: boolean) => void;
 }
 
 export const LibraryPanel: React.FC<LibraryPanelProps> = ({
@@ -72,8 +75,18 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
     setActiveLibraryCategory,
     performPixabaySearch,
     setVectorPage,
-    setPixabayPage
+    setPixabayPage,
+    savedDesigns,
+    isLoadingSaved,
+    fetchDesigns
 }) => {
+    const [templateTab, setTemplateTab] = React.useState<'official' | 'saved'>('official');
+
+    React.useEffect(() => {
+        if (activeTool === 'templates' && templateTab === 'saved') {
+            fetchDesigns();
+        }
+    }, [activeTool, templateTab]);
     if (!activeTool || !['upload', 'templates', 'elements', 'bg', 'library'].includes(activeTool)) {
         return null;
     }
@@ -113,23 +126,69 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
             {activeTool === 'templates' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele de Design</h3>
+
+                    <div className="tab-switcher" style={{ marginBottom: '1.5rem' }}>
+                        <button
+                            className={`tab-btn ${templateTab === 'official' ? 'active' : ''}`}
+                            onClick={() => setTemplateTab('official')}
+                        >
+                            Oficiale
+                        </button>
+                        <button
+                            className={`tab-btn ${templateTab === 'saved' ? 'active' : ''}`}
+                            onClick={() => setTemplateTab('saved')}
+                        >
+                            Salvate
+                        </button>
+                    </div>
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
-                        {VISION_TEMPLATES.map(t => (
-                            <button
-                                key={t.id}
-                                onClick={() => loadTemplate(t)}
-                                className="template-card"
-                            >
-                                <div className="template-thumb">
-                                    <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                </div>
-                                <div className="template-info">
-                                    <div className="template-name">{t.name}</div>
-                                    <div className="template-desc">{t.description}</div>
-                                </div>
-                            </button>
-                        ))}
+                        {templateTab === 'official' ? (
+                            VISION_TEMPLATES.map(t => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => loadTemplate(t)}
+                                    className="template-card"
+                                >
+                                    <div className="template-thumb">
+                                        <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div className="template-info">
+                                        <div className="template-name">{t.name}</div>
+                                        <div className="template-desc">{t.description}</div>
+                                    </div>
+                                </button>
+                            ))
+                        ) : (
+                            <>
+                                {isLoadingSaved ? (
+                                    <div className="loading-state">Se încarcă design-urile...</div>
+                                ) : savedDesigns.length > 0 ? (
+                                    savedDesigns.map(d => (
+                                        <button
+                                            key={d.id}
+                                            onClick={() => loadTemplate(d.data)}
+                                            className="template-card"
+                                        >
+                                            <div className="template-thumb" style={{ background: d.data.background.startsWith('#') ? d.data.background : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                {d.data.background.startsWith('#') ? null : <img src={d.data.background} alt={d.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Preview indisponibil</div>
+                                            </div>
+                                            <div className="template-info">
+                                                <div className="template-name">{d.name}</div>
+                                                <div className="template-desc">Creat: {new Date(d.createdAt).toLocaleDateString()}</div>
+                                            </div>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="empty-state">Nu ai salvat niciun design încă.</div>
+                                )}
+                                <button onClick={() => fetchDesigns()} className="refresh-btn" style={{ fontSize: '0.8rem', opacity: 0.7, padding: '0.5rem', cursor: 'pointer' }}>
+                                    Reîmprospătează lista
+                                </button>
+                            </>
+                        )}
                     </div>
                 </>
             )}
@@ -553,6 +612,43 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                     font-size: 0.8rem;
                     background: white;
                     cursor: pointer;
+                }
+
+                .tab-switcher {
+                    display: flex;
+                    background: var(--secondary);
+                    padding: 0.25rem;
+                    border-radius: 8px;
+                    gap: 0.25rem;
+                }
+                .tab-btn {
+                    flex: 1;
+                    padding: 0.5rem;
+                    border: none;
+                    background: transparent;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    color: var(--secondary-foreground);
+                }
+                .tab-btn.active {
+                    background: white;
+                    color: var(--primary);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                .loading-state {
+                    text-align: center;
+                    padding: 2rem;
+                    font-size: 0.9rem;
+                    color: #64748b;
+                }
+                .refresh-btn {
+                    background: none;
+                    border: none;
+                    text-decoration: underline;
+                    color: var(--primary);
                 }
 
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
