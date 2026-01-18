@@ -46,6 +46,8 @@ export default function ConfiguratorClient() {
     const [pixabayResults, setPixabayResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [pixabayTransparent, setPixabayTransparent] = useState(false);
+    const [pixabayOrientation, setPixabayOrientation] = useState<string>('all');
+    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
     const { addItem } = useCart();
 
@@ -93,7 +95,10 @@ export default function ConfiguratorClient() {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const url = event.target?.result as string;
-                addElement('image', url);
+                setUploadedImages(prev => [url, ...prev]);
+                setActiveLibraryCategory('incarcate' as any);
+                setPixabayResults([]); // Close search results to show uploads
+                setActiveTool('library'); // Open library to show the upload
             };
             reader.readAsDataURL(file);
         }
@@ -143,18 +148,18 @@ export default function ConfiguratorClient() {
         setElements(elements.map(el => el.id === id ? { ...el, [property]: value } : el));
     };
 
-    // Auto-search when transparency filter changes
+    // Auto-search when transparency or orientation filter changes
     useEffect(() => {
         if (pixabayQuery) {
             performPixabaySearch(pixabayQuery);
         }
-    }, [pixabayTransparent]);
+    }, [pixabayTransparent, pixabayOrientation]);
 
     const performPixabaySearch = async (query: string) => {
         if (!query) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`/api/pixabay?q=${encodeURIComponent(query)}&transparent=${pixabayTransparent}`);
+            const res = await fetch(`/api/pixabay?q=${encodeURIComponent(query)}&transparent=${pixabayTransparent}&orientation=${pixabayOrientation}`);
             const data = await res.json();
             if (data.hits) {
                 setPixabayResults(data.hits);
@@ -287,9 +292,42 @@ export default function ConfiguratorClient() {
                                     />
                                     <span>Fără fundal (PNG)</span>
                                 </label>
+
+                                <select
+                                    value={pixabayOrientation}
+                                    onChange={(e) => setPixabayOrientation(e.target.value)}
+                                    style={{
+                                        padding: '0.4rem 0.6rem',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border)',
+                                        fontSize: '0.8rem',
+                                        background: 'white',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="all">Toate</option>
+                                    <option value="horizontal">Landscape</option>
+                                    <option value="vertical">Portrait</option>
+                                </select>
                             </div>
 
                             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
+                                <button
+                                    onClick={() => setActiveLibraryCategory('incarcate' as any)}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '99px',
+                                        border: '1px solid var(--border)',
+                                        background: activeLibraryCategory === ('incarcate' as any) ? 'var(--primary)' : 'white',
+                                        color: activeLibraryCategory === ('incarcate' as any) ? 'white' : 'var(--foreground)',
+                                        fontSize: '0.8rem',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        fontWeight: activeLibraryCategory === ('incarcate' as any) ? 700 : 400
+                                    }}
+                                >
+                                    Încărcate ({uploadedImages.length})
+                                </button>
                                 {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
                                     <button
                                         key={cat}
@@ -333,7 +371,32 @@ export default function ConfiguratorClient() {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
-                                {pixabayResults.length > 0 ? (
+                                {(activeLibraryCategory as any) === 'incarcate' ? (
+                                    uploadedImages.length > 0 ? (
+                                        uploadedImages.map((url, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => addElement('image', url)}
+                                                style={{
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '0.5rem',
+                                                    overflow: 'hidden',
+                                                    background: 'white',
+                                                    cursor: 'pointer',
+                                                    height: '100px',
+                                                    position: 'relative'
+                                                }}
+                                                className="hover:shadow-md transition-shadow"
+                                            >
+                                                <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                            Nu ai încărcat nicio poză încă.
+                                        </div>
+                                    )
+                                ) : pixabayResults.length > 0 ? (
                                     pixabayResults.map(hit => (
                                         <button
                                             key={hit.id}
