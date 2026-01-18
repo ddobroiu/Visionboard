@@ -643,9 +643,45 @@ export default function ConfiguratorClient() {
             </aside>
 
             {/* Tool Panel (for Background, Library, Elements, Templates) */}
-            <div style={toolPanelStyle}>
-
-                {activeTool === 'templates' && (
+                            {activeTool === 'upload' && (
+                    <>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Încărcare Imagini</h3>
+                        <button className="tool-btn active" style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem', justifyContent: 'center', gap: '8px', padding: '0.75rem' }} onClick={handleUploadClick}>
+                            <Upload size={20} />
+                            <span>Încarcă Imagine Nouă</span>
+                        </button>
+                        
+                        <div style={{ paddingBottom: '1rem', fontWeight: 600, fontSize: '0.9rem' }}>Imaginile tale ({uploadedImages.length})</div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
+                            {uploadedImages.length > 0 ? (
+                                uploadedImages.map((url, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => addElement('image', url)}
+                                        style={{
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '0.5rem',
+                                            overflow: 'hidden',
+                                            background: 'white',
+                                            cursor: 'pointer',
+                                            height: '100px',
+                                            position: 'relative'
+                                        }}
+                                        className="hover:shadow-md transition-shadow"
+                                    >
+                                        <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </button>
+                                ))
+                            ) : (
+                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                    Nu ai încărcat nicio poză încă.
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+{activeTool === 'templates' && (
                     <>
                         <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
@@ -999,7 +1035,7 @@ export default function ConfiguratorClient() {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
-                            pixabayResults.length > 0 ? (
+                            {pixabayResults.length > 0 ? (
                                 <>
                                     {pixabayResults.map(hit => (
                                         <button
@@ -1776,6 +1812,8 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
+
 
 
 
