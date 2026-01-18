@@ -12,26 +12,6 @@ import { useCart } from '@/components/CartContext';
 import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
 import { VISION_TEMPLATES, VisionTemplate } from '@/lib/templates';
 
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-                src?: string;
-                alt?: string;
-                ar?: boolean;
-                'auto-rotate'?: boolean;
-                'camera-controls'?: boolean;
-                'shadow-intensity'?: string | number;
-                poster?: string;
-                exposure?: string;
-                loading?: string;
-                reveal?: string;
-                key?: string | number;
-                ref?: any;
-            };
-        }
-    }
-}
 
 interface ConfigElement {
     id: string;
@@ -1492,6 +1472,7 @@ export default function ConfiguratorClient() {
                         ))
                     ) : (
                         <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, background: '#f8fafc', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+                            {/* @ts-ignore */}
                             <model-viewer
                                 key={`3d-${orientation}-${size}`}
                                 ref={modelViewerRef}
@@ -1603,6 +1584,7 @@ export default function ConfiguratorClient() {
                                 boxShadow: viewMode === '3d' ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none'
                             }}
                         >
+                            {/* @ts-ignore */}
                             <model-viewer
                                 key={`sidebar-3d-${orientation}`}
                                 src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}

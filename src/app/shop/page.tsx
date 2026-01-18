@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useMemo, useEffect, useState, useTransition } from "react";
+import React, { useMemo, useEffect, useState, useTransition, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,7 +18,7 @@ import { PRODUCTS, Product, CATEGORIES_ORDER } from "@/lib/products";
 // --- CONFIG ---
 const ITEMS_PER_PAGE = 12;
 
-export default function ShopPage() {
+function ShopContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -112,7 +112,7 @@ export default function ShopPage() {
                         Magazin <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">Visionboard</span>
                     </h1>
                     <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
-                        Alege template-ul perfect pentru visurile tale sau configurează un produs de la zero.
+                        Alege template-ul perfect pentru visurile tale sau configureazÄƒ un produs de la zero.
                     </p>
                 </div>
             </div>
@@ -125,7 +125,7 @@ export default function ShopPage() {
                         className="lg:hidden w-full flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 font-bold"
                         onClick={() => setShowMobileSidebar(!showMobileSidebar)}
                     >
-                        <span>{showMobileSidebar ? "Ascunde Filtre" : "Arată Filtre & Categorii"}</span>
+                        <span>{showMobileSidebar ? "Ascunde Filtre" : "AratÄƒ Filtre & Categorii"}</span>
                         <Filter size={20} />
                     </button>
 
@@ -135,13 +135,13 @@ export default function ShopPage() {
                         {/* SEARCH */}
                         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                             <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                <Search size={18} /> Căutare
+                                <Search size={18} /> CÄƒutare
                             </h3>
                             <div className="relative">
                                 <input
                                     value={localSearch}
                                     onChange={(e) => setLocalSearch(e.target.value)}
-                                    placeholder="Caută..."
+                                    placeholder="CautÄƒ..."
                                     className="w-full pl-3 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none"
                                 />
                                 {localSearch && (
@@ -255,7 +255,7 @@ export default function ShopPage() {
                                                         href={`/configurator?product=${product.id}`}
                                                         className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold rounded-lg hover:bg-violet-600 dark:hover:bg-violet-200 transition-colors"
                                                     >
-                                                        Personalizează
+                                                        PersonalizeazÄƒ
                                                     </Link>
                                                 </div>
                                             </div>
@@ -291,9 +291,9 @@ export default function ShopPage() {
                                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Search className="text-slate-400" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-2">Nu am găsit produse</h3>
-                                <p className="text-slate-500">Încearcă alte filtre.</p>
-                                <button onClick={() => updateFilters({ category: "Toate", subcategory: null, search: "" })} className="mt-4 text-violet-600 font-bold hover:underline">Resetează tot</button>
+                                <h3 className="text-xl font-bold mb-2">Nu am gÄƒsit produse</h3>
+                                <p className="text-slate-500">ÃŽncearcÄƒ alte filtre.</p>
+                                <button onClick={() => updateFilters({ category: "Toate", subcategory: null, search: "" })} className="mt-4 text-violet-600 font-bold hover:underline">ReseteazÄƒ tot</button>
                             </div>
                         )}
 
@@ -303,3 +303,12 @@ export default function ShopPage() {
         </main>
     );
 }
+
+export default function ShopPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Se încarcă magazinul...</div>}>
+            <ShopContent />
+        </Suspense>
+    );
+}
+
