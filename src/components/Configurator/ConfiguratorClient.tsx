@@ -792,7 +792,7 @@ export default function ConfiguratorClient() {
                                 </button>
                             ))}
 
-                            {vectorResults.length > 0{activeTool === 'upload' && (
+                            {vectorResults.length > 0 && (
                                 <button
                                     onClick={handleLoadMoreVectors}
                                     disabled={isSearchingVectors}
@@ -814,7 +814,7 @@ export default function ConfiguratorClient() {
                                 </button>
                             )}
 
-                            {vectorError{activeTool === 'upload' && (
+                            {vectorError && (
                                 <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '1rem', color: 'var(--secondary-foreground)', opacity: 0.6, fontSize: '0.8rem' }}>
                                     {vectorError}
                                 </div>
@@ -822,7 +822,7 @@ export default function ConfiguratorClient() {
                         </div>
                     </>
                 )}
-                {activeTool === 'bg'{activeTool === 'upload' && (
+                {activeTool === 'bg' && (
                     <>
                         <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
 
@@ -849,7 +849,7 @@ export default function ConfiguratorClient() {
                             >
                                 <Upload size={18} /> Încarcă Poză de Fundal
                             </button>
-                            {!background.startsWith('#'){activeTool === 'upload' && (
+                            {!background.startsWith('#') && (
                                 <button
                                     onClick={() => setBackground('#ffffff')}
                                     style={{
@@ -908,7 +908,7 @@ export default function ConfiguratorClient() {
                     </>
                 )}
 
-                {activeTool === 'library'{activeTool === 'upload' && (
+                {activeTool === 'library' && (
                     <>
                         <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
 
@@ -1013,7 +1013,7 @@ export default function ConfiguratorClient() {
                                     {cat.charAt(0).toUpperCase() + cat.slice(1)}
                                 </button>
                             ))}
-                            {pixabayResults.length > 0{activeTool === 'upload' && (
+                            {pixabayResults.length > 0 && (
                                 <button
                                     onClick={() => setActiveLibraryCategory('search' as any)}
                                     style={{
@@ -1080,7 +1080,7 @@ export default function ConfiguratorClient() {
                                 </div>
                             )}
 
-                            {pixabayError && pixabayResults.length > 0{activeTool === 'upload' && (
+                            {pixabayError && pixabayResults.length > 0 && (
                                 <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                                     {pixabayError}
                                 </div>
@@ -1090,7 +1090,7 @@ export default function ConfiguratorClient() {
                 )}
             </div>
             {/* Text Edit Panel (Activates when text selected or tool active) */}
-            {activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text'{activeTool === 'upload' && (
+            {activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text' && (
                 <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
                     <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
 
@@ -1183,7 +1183,7 @@ export default function ConfiguratorClient() {
             )}
 
             {/* Image Edit Panel */}
-            {activeTool === 'edit-image' && selectedId && elements.find(e => e.id === selectedId)?.type === 'image'{activeTool === 'upload' && (
+            {activeTool === 'edit-image' && selectedId && elements.find(e => e.id === selectedId)?.type === 'image' && (
                 <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
                     <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Imagine</h3>
 
@@ -1366,7 +1366,7 @@ export default function ConfiguratorClient() {
                         borderRadius: '8px'
                     }}
                 >
-                    {elements.length === 0{activeTool === 'upload' && (
+                    {elements.length === 0 && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
                             <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
                             <div>Spațiu de Lucru</div>
@@ -1416,7 +1416,7 @@ export default function ConfiguratorClient() {
                                         cursor: 'move'
                                     }}
                                 >
-                                    {selectedId === el.id{activeTool === 'upload' && (
+                                    {selectedId === el.id && (
                                         <>
                                             {/* Corner Resize Handles */}
                                             {['nw', 'ne', 'sw', 'se'].map((corner) => (
@@ -1715,7 +1715,7 @@ export default function ConfiguratorClient() {
 
             {/* Context Menu */}
             {
-                contextMenu.visible{activeTool === 'upload' && (
+                contextMenu.visible && (
                     <div style={{
                         position: 'fixed',
                         top: contextMenu.y,
@@ -1811,6 +1811,12 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
+
+
+
+
+
 
 
 
