@@ -98,7 +98,7 @@ export default function ConfiguratorClient() {
     const bgFileInputRef = useRef<HTMLInputElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
     const modelViewerRef = useRef<any>(null);
-    const workspaceContainerRef = useRef<HTMLDivElement>(null);// Calcul preÈ› simplist pt demo
+    const workspaceContainerRef = useRef<HTMLDivElement>(null);// Calcul preț simplist pt demo
     const calculatePrice = () => {
         let base = 100;
         if (material === 'forex') base += 20;
@@ -485,14 +485,14 @@ export default function ConfiguratorClient() {
 
             if (data.hits) {
                 if (data.hits.length === 0 && isLoadMore) {
-                    errorSetter("Nu mai sunt rezultate de afiÈ™at.");
+                    errorSetter("Nu mai sunt rezultate de afișat.");
                 } else {
                     if (isLoadMore) {
                         setter(prev => [...prev, ...data.hits]);
                     } else {
                         setter(data.hits);
                         if (data.hits.length === 0) {
-                            errorSetter(`Nu am gÄƒsit rezultate pentru "${query}"`);
+                            errorSetter(`Nu am găsit rezultate pentru "${query}"`);
                         }
                     }
                 }
@@ -569,7 +569,7 @@ export default function ConfiguratorClient() {
                 </button>
                 <button className={`tool-btn ${activeTool === 'library' ? 'active' : ''}`} title="Library" onClick={() => setActiveTool(activeTool === 'library' ? null : 'library')}>
                     <LayoutGrid size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>BibliotecÄƒ</span>
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Bibliotecă</span>
                 </button>
                 <button className={`tool-btn ${activeTool === 'elements' ? 'active' : ''}`} title="Elements" onClick={() => setActiveTool(activeTool === 'elements' ? null : 'elements')}>
                     <Sparkles size={24} />
@@ -630,7 +630,7 @@ export default function ConfiguratorClient() {
                                 type="text"
                                 value={vectorQuery}
                                 onChange={(e) => setVectorQuery(e.target.value)}
-                                placeholder="CautÄƒ elemente (ex: flori, linii)..."
+                                placeholder="Caută elemente (ex: flori, linii)..."
                                 style={{
                                     flex: 1,
                                     padding: '0.6rem',
@@ -654,7 +654,7 @@ export default function ConfiguratorClient() {
                                     fontWeight: 600
                                 }}
                             >
-                                {isSearchingVectors ? '...' : 'CautÄƒ'}
+                                {isSearchingVectors ? '...' : 'Caută'}
                             </button>
                         </form>
 
@@ -723,7 +723,7 @@ export default function ConfiguratorClient() {
                                         marginBottom: '1rem'
                                     }}
                                 >
-                                    {isSearchingVectors ? 'Se Ã®ncarcÄƒ...' : 'ÃŽncarcÄƒ mai multe elemente'}
+                                    {isSearchingVectors ? 'Se încarcă...' : 'Încarcă mai multe elemente'}
                                 </button>
                             )}
 
@@ -760,7 +760,7 @@ export default function ConfiguratorClient() {
                                 }}
                                 className="hover:border-primary transition-colors"
                             >
-                                <Upload size={18} /> ÃŽncarcÄƒ PozÄƒ de Fundal
+                                <Upload size={18} /> Încarcă Poză de Fundal
                             </button>
                             {!background.startsWith('#') && (
                                 <button
@@ -783,7 +783,7 @@ export default function ConfiguratorClient() {
                                     }}
                                     className="hover:bg-red-600 transition-colors"
                                 >
-                                    <X size={14} /> EliminÄƒ Imaginea de Fundal
+                                    <X size={14} /> Elimină Imaginea de Fundal
                                 </button>
                             )}
                         </div>
@@ -831,7 +831,7 @@ export default function ConfiguratorClient() {
                                 type="text"
                                 value={pixabayQuery}
                                 onChange={(e) => setPixabayQuery(e.target.value)}
-                                placeholder="CautÄƒ Ã®n Pixabay..."
+                                placeholder="Caută în Pixabay..."
                                 style={{
                                     flex: 1,
                                     padding: '0.6rem',
@@ -855,7 +855,7 @@ export default function ConfiguratorClient() {
                                     fontWeight: 600
                                 }}
                             >
-                                {isSearching ? '...' : 'CautÄƒ'}
+                                {isSearching ? '...' : 'Caută'}
                             </button>
                         </form>
 
@@ -880,7 +880,7 @@ export default function ConfiguratorClient() {
                                     onChange={(e) => setPixabayTransparent(e.target.checked)}
                                     style={{ accentColor: 'var(--primary)' }}
                                 />
-                                <span>FÄƒrÄƒ fundal (PNG)</span>
+                                <span>Fără fundal (PNG)</span>
                             </label>
 
                             <select
@@ -916,7 +916,7 @@ export default function ConfiguratorClient() {
                                     fontWeight: activeLibraryCategory === ('incarcate' as any) ? 700 : 400
                                 }}
                             >
-                                ÃŽncÄƒrcate ({uploadedImages.length})
+                                Încărcate ({uploadedImages.length})
                             </button>
                             {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
                                 <button
@@ -956,7 +956,7 @@ export default function ConfiguratorClient() {
                                         fontWeight: 'bold'
                                     }}
                                 >
-                                    Rezultate CÄƒutare
+                                    Rezultate Căutare
                                 </button>
                             )}
                         </div>
@@ -984,7 +984,7 @@ export default function ConfiguratorClient() {
                                     ))
                                 ) : (
                                     <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                        Nu ai Ã®ncÄƒrcat nicio pozÄƒ Ã®ncÄƒ.
+                                        Nu ai încărcat nicio poză încă.
                                     </div>
                                 )
                             ) : pixabayResults.length > 0 ? (
@@ -1024,12 +1024,12 @@ export default function ConfiguratorClient() {
                                             marginBottom: '1rem'
                                         }}
                                     >
-                                        {isSearching ? 'Se Ã®ncarcÄƒ...' : 'ÃŽncarcÄƒ mai multe rezultate'}
+                                        {isSearching ? 'Se încarcă...' : 'Încarcă mai multe rezultate'}
                                     </button>
                                 </>
                             ) : (
                                 <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                    {pixabayError || (pixabayQuery ? `Nu am gÄƒsit rezultate pentru "${pixabayQuery}"` : "CÄƒutaÈ›i sau selectaÈ›i o categorie.")}
+                                    {pixabayError || (pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie.")}
                                 </div>
                             )}
 
@@ -1069,7 +1069,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Text Scale / Zoom */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒreÈ™te / MicÈ™oreazÄƒ Text: {Math.round((el.scale || 1) * 100)}%</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărește / Micșorează Text: {Math.round((el.scale || 1) * 100)}%</label>
                                     <input
                                         type="range"
                                         min="0.5"
@@ -1083,7 +1083,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Font Size */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font ExcatÄƒ: {el.fontSize}px</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font Excată: {el.fontSize}px</label>
                                     <input
                                         type="range"
                                         min="12"
@@ -1216,18 +1216,18 @@ export default function ConfiguratorClient() {
                                         ))}
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                        * Sfat: AplicÄƒ o culoare pentru a crea o siluetÄƒ sau "ORIG" pentru culorile native.
+                                        * Sfat: Aplică o culoare pentru a crea o siluetă sau "ORIG" pentru culorile native.
                                     </div>
                                 </div>
 
-                                {/* FormÄƒ Imagine (Enhanced) */}
+                                {/* Formă Imagine (Enhanced) */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>FormÄƒ Imagine</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                                         {[
-                                            { id: 'rect', label: 'PÄƒtrat', icon: <Square size={14} /> },
+                                            { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
                                             { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
-                                            { id: 'heart', label: 'InimÄƒ', icon: <Heart size={14} /> },
+                                            { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
                                             { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
                                             { id: 'star', label: 'Stea', icon: <Star size={14} /> }
                                         ].map(shape => (
@@ -1250,7 +1250,7 @@ export default function ConfiguratorClient() {
                                 </div>
 
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
-                                    Sfat: PoÈ›i trage elementul oriunde Ã®n spaÈ›iul de lucru.
+                                    Sfat: Poți trage elementul oriunde în spațiul de lucru.
                                 </div>
 
                                 <button
@@ -1322,8 +1322,8 @@ export default function ConfiguratorClient() {
                     {elements.length === 0 && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
                             <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <div>SpaÈ›iu de Lucru</div>
-                            <div style={{ fontSize: '0.875rem' }}>FoloseÈ™te meniul din stÃ¢nga</div>
+                            <div>Spațiu de Lucru</div>
+                            <div style={{ fontSize: '0.875rem' }}>Folosește meniul din stnga</div>
                         </div>
                     )}
 
@@ -1408,7 +1408,7 @@ export default function ConfiguratorClient() {
                                                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                                 }}
                                                 className="hover:bg-red-600 transition-colors"
-                                                title="È˜terge element"
+                                                title="ț˜terge element"
                                             >
                                                 <X size={14} strokeWidth={3} />
                                             </button>
@@ -1494,7 +1494,7 @@ export default function ConfiguratorClient() {
                                     fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                             >
-                                <Sparkles size={14} /> ReÃ®mprospÄƒteazÄƒ 3D
+                                <Sparkles size={14} /> Reîmprospătează 3D
                             </button>
                         </div>
                     )}
@@ -1514,8 +1514,8 @@ export default function ConfiguratorClient() {
                         style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
                     >
                         <option value="canvas">Tablou Canvas</option>
-                        <option value="forex">PlacÄƒ Forex (PVC)</option>
-                        <option value="acrylic">SticlÄƒ AcrilicÄƒ</option>
+                        <option value="forex">Placă Forex (PVC)</option>
+                        <option value="acrylic">Sticlă Acrilică</option>
                     </select>
                 </div>
 
@@ -1656,12 +1656,12 @@ export default function ConfiguratorClient() {
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        <span>PreÈ›:</span>
+                        <span>Preț:</span>
                         <span>{price} Lei</span>
                     </div>
                     <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={handleAddToCart}>
                         <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
-                        AdaugÄƒ Ã®n CoÈ™
+                        Adaugă în Coș
                     </button>
                 </div>
             </aside>
@@ -1690,7 +1690,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <Copy size={14} />
-                            DuplicÄƒ Element
+                            Duplică Element
                         </button>
                         <button
                             onClick={() => bringToFront(contextMenu.elementId!)}
@@ -1698,7 +1698,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <ArrowUp size={14} />
-                            Adu Ã®n faÈ›Äƒ
+                            Adu în față
                         </button>
                         <button
                             onClick={() => sendToBack(contextMenu.elementId!)}
@@ -1706,7 +1706,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <ArrowDown size={14} />
-                            Trimite Ã®n spate
+                            Trimite în spate
                         </button>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '0.25rem 0' }} />
                         <button
@@ -1715,7 +1715,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-red-50 transition-colors flex items-center gap-2"
                         >
                             <X size={14} />
-                            È˜terge Element
+                            ț˜terge Element
                         </button>
                     </div>
                 )
@@ -1764,6 +1764,7 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
 
 
 
