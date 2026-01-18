@@ -1,5 +1,5 @@
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Mock data for shop items
 const SHOP_ITEMS = [
@@ -36,35 +36,36 @@ const SHOP_ITEMS = [
 export default function ShopPage() {
     return (
         <main>
-            <Navbar />
-
-            <section className="section" style={{ background: 'var(--accent)', paddingBottom: '2rem' }}>
-                <div className="container" style={{ textAlign: 'center' }}>
-                    <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Modele Gata Făcute</h1>
-                    <p style={{ fontSize: '1.25rem', color: 'var(--secondary-foreground)', maxWidth: '600px', margin: '0 auto' }}>
+            <section className="bg-indigo-50 dark:bg-slate-800/50 py-16">
+                <div className="container mx-auto px-4 text-center">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">Modele Gata Făcute</h1>
+                    <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
                         Alege un design creat de experți și personalizează-l minimal sau comandă-l direct.
                     </p>
                 </div>
             </section>
 
-            <section className="section">
-                <div className="container">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
+            <section className="py-16">
+                <div className="container mx-auto px-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                         {SHOP_ITEMS.map((item) => (
-                            <div key={item.id} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', background: 'var(--surface)', transition: 'transform 0.2s' }}>
-                                <div style={{ height: '200px', background: '#e2e8f0', position: 'relative' }}>
-                                    {/* Using standard img tag for simplicity with external urls for now, or Next Image if configured */}
-                                    <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                                <div className="h-64 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                                    <img
+                                        src={item.image}
+                                        alt={item.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
                                 </div>
-                                <div style={{ padding: '1.5rem' }}>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '0.5rem' }}>
+                                <div className="p-6">
+                                    <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-2 uppercase tracking-wide">
                                         {item.category}
                                     </div>
-                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{item.title}</h3>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
+                                    <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white line-clamp-1">{item.title}</h3>
+                                    <div className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">
                                         {item.price} Lei
                                     </div>
-                                    <Link href={`/configurator?template=${item.id}`} className="btn btn-outline" style={{ width: '100%' }}>
+                                    <Link href={`/configurator?template=${item.id}`} className="block w-full text-center rounded-xl border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white font-semibold py-3 transition-colors">
                                         Personalizează
                                     </Link>
                                 </div>
@@ -73,12 +74,6 @@ export default function ShopPage() {
                     </div>
                 </div>
             </section>
-
-            <footer style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', padding: '2rem 0', marginTop: 'auto' }}>
-                <div className="container" style={{ textAlign: 'center', color: 'var(--secondary-foreground)' }}>
-                    &copy; {new Date().getFullYear()} Visionboard.ro. Toate drepturile rezervate.
-                </div>
-            </footer>
         </main>
     );
 }
