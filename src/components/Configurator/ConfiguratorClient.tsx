@@ -3,11 +3,32 @@
 import { useState, useRef, useEffect } from 'react';
 import {
     Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X,
-    GripHorizontal, LayoutGrid, Sparkles
+    GripHorizontal, LayoutGrid, Sparkles, Copy, ArrowUp, ArrowDown,
+    Box, Eye
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Script from 'next/script';
 import { useCart } from '@/components/CartContext';
 import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
+                src?: string;
+                poster?: string;
+                alt?: string;
+                'shadow-intensity'?: string;
+                'camera-controls'?: boolean;
+                'auto-rotate'?: boolean;
+                ar?: boolean;
+                'ar-modes'?: string;
+                'tone-mapping'?: string;
+                scale?: string;
+            }, HTMLElement>;
+        }
+    }
+}
 
 interface ConfigElement {
     id: string;
@@ -55,6 +76,7 @@ export default function ConfiguratorClient() {
     const [material, setMaterial] = useState('canvas');
     const [size, setSize] = useState('40x60');
     const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
+    const [viewMode, setViewMode] = useState<'workspace' | '3d'>('workspace');
 
     const [elements, setElements] = useState<ConfigElement[]>([]);
     const [background, setBackground] = useState<string>('#ffffff');
@@ -79,10 +101,17 @@ export default function ConfiguratorClient() {
     const [vectorPage, setVectorPage] = useState(1);
     const [vectorError, setVectorError] = useState<string | null>(null);
 
+    // Context Menu State
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean, elementId: string | null }>({
+        x: 0, y: 0, visible: false, elementId: null
+    });
+
     const { addItem } = useCart();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const bgFileInputRef = useRef<HTMLInputElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
+    const modelViewerRef = useRef<any>(null);
 
     // Calcul preț simplist pt demo
     const calculatePrice = () => {
@@ -129,6 +158,22 @@ export default function ConfiguratorClient() {
                 setActiveLibraryCategory('incarcate' as any);
                 setPixabayResults([]); // Close search results to show uploads
                 setActiveTool('library'); // Open library to show the upload
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleBgUploadClick = () => {
+        bgFileInputRef.current?.click();
+    };
+
+    const handleBgFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const url = event.target?.result as string;
+                setBackground(url);
             };
             reader.readAsDataURL(file);
         }
@@ -183,6 +228,151 @@ export default function ConfiguratorClient() {
     const updateElementStyle = (id: string, property: keyof ConfigElement, value: any) => {
         setElements(elements.map(el => el.id === id ? { ...el, [property]: value } : el));
     };
+
+    // --- 3D TEXTURE GENERATION ---
+    const update3DTexture = async () => {
+        const viewer = modelViewerRef.current;
+        if (!viewer) return;
+
+        try {
+            if (!viewer.model) {
+                await new Promise(resolve => viewer.addEventListener('load', resolve, { once: true }));
+            }
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+
+            const res = 1024;
+            canvas.width = res;
+            canvas.height = res;
+
+            // Background
+            ctx.fillStyle = background.startsWith('#') ? background : '#ffffff';
+            ctx.fillRect(0, 0, res, res);
+
+            if (!background.startsWith('#')) {
+                const bgImg = new Image();
+                bgImg.src = background;
+                bgImg.crossOrigin = "anonymous";
+                await new Promise((r) => { bgImg.onload = r; bgImg.onerror = r; });
+                const bgRatio = bgImg.width / bgImg.height;
+                let dw, dh, dx, dy;
+                if (bgRatio > 1) { dh = res; dw = res * bgRatio; dx = (res - dw) / 2; dy = 0; }
+                else { dw = res; dh = res / bgRatio; dx = 0; dy = (res - dh) / 2; }
+                ctx.drawImage(bgImg, dx, dy, dw, dh);
+            }
+
+            const workspaceW = orientation === 'landscape' ? 600 : 400;
+            const scale = res / workspaceW;
+
+            for (const el of elements) {
+                ctx.save();
+                ctx.translate((el.x + 20) * scale, (el.y + 20) * scale);
+                ctx.scale(el.scale || 1, el.scale || 1);
+
+                if (el.type === 'text') {
+                    ctx.fillStyle = el.color || '#000000';
+                    const fSize = (el.fontSize || 24) * scale;
+                    ctx.font = `bold ${fSize}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(el.content, 0, 0);
+                } else if (el.type === 'image') {
+                    const img = new Image();
+                    img.src = el.content;
+                    img.crossOrigin = "anonymous";
+                    await new Promise((r) => { img.onload = r; img.onerror = r; });
+                    const imgW = 200 * scale;
+                    const imgRatio = img.width / img.height;
+                    const dh = imgW / imgRatio;
+                    if (el.color) {
+                        const tCanvas = document.createElement('canvas');
+                        tCanvas.width = img.width; tCanvas.height = img.height;
+                        const tCtx = tCanvas.getContext('2d')!;
+                        tCtx.fillStyle = el.color; tCtx.fillRect(0, 0, img.width, img.height);
+                        tCtx.globalCompositeOperation = 'destination-in'; tCtx.drawImage(img, 0, 0);
+                        ctx.drawImage(tCanvas, -imgW / 2, -dh / 2, imgW, dh);
+                    } else {
+                        ctx.drawImage(img, -imgW / 2, -dh / 2, imgW, dh);
+                    }
+                }
+                ctx.restore();
+            }
+
+            const mCanvas = document.createElement('canvas');
+            mCanvas.width = res; mCanvas.height = res;
+            const mCtx = mCanvas.getContext('2d')!;
+            mCtx.translate(res, 0); mCtx.scale(-1, 1);
+            mCtx.drawImage(canvas, 0, 0);
+
+            const blob = await new Promise<Blob | null>(r => mCanvas.toBlob(r, 'image/jpeg', 0.9));
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            if (viewer.model) {
+                const tex = await viewer.createTexture(url);
+                const mat = viewer.model.materials[0];
+                if (mat?.pbrMetallicRoughness) mat.pbrMetallicRoughness.baseColorTexture.setTexture(tex);
+                URL.revokeObjectURL(url);
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    useEffect(() => {
+        if (viewMode === '3d') update3DTexture();
+    }, [elements, background, size, orientation, viewMode]);
+
+    const duplicateElement = (id: string) => {
+        const el = elements.find(e => e.id === id);
+        if (el) {
+            const newElement: ConfigElement = {
+                ...el,
+                id: Math.random().toString(36).substr(2, 9),
+                x: el.x + 20, // Slight offset
+                y: el.y + 20,
+            };
+            setElements([...elements, newElement]);
+            setSelectedId(newElement.id);
+        }
+        setContextMenu({ ...contextMenu, visible: false });
+    };
+
+    const bringToFront = (id: string) => {
+        const el = elements.find(e => e.id === id);
+        if (el) {
+            setElements([...elements.filter(e => e.id !== id), el]);
+        }
+        setContextMenu({ ...contextMenu, visible: false });
+    };
+
+    const sendToBack = (id: string) => {
+        const el = elements.find(e => e.id === id);
+        if (el) {
+            setElements([el, ...elements.filter(e => e.id !== id)]);
+        }
+        setContextMenu({ ...contextMenu, visible: false });
+    };
+
+    const handleContextMenu = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            visible: true,
+            elementId: id
+        });
+        setSelectedId(id);
+    };
+
+    // Global click listener to close context menu
+    useEffect(() => {
+        const handleClick = () => {
+            if (contextMenu.visible) setContextMenu({ ...contextMenu, visible: false });
+        };
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, [contextMenu.visible]);
 
     // Auto-search when transparency or orientation filter changes
     useEffect(() => {
@@ -270,12 +460,21 @@ export default function ConfiguratorClient() {
 
     return (
         <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+            <Script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module" strategy="lazyOnload" />
+
             <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 accept="image/*"
                 onChange={handleFileChange}
+            />
+            <input
+                type="file"
+                ref={bgFileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={handleBgFileChange}
             />
 
             {/* Sidebar Tools */}
@@ -423,7 +622,73 @@ export default function ConfiguratorClient() {
                     )}
                     {activeTool === 'bg' && (
                         <>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Culoare Fundal</h3>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Imagine de Fundal</label>
+                                <button
+                                    onClick={handleBgUploadClick}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        borderRadius: '8px',
+                                        border: '2px dashed var(--border)',
+                                        background: 'white',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem',
+                                        fontSize: '0.875rem',
+                                        color: 'var(--primary)',
+                                        fontWeight: 600
+                                    }}
+                                    className="hover:border-primary transition-colors"
+                                >
+                                    <Upload size={18} /> Încarcă Poză de Fundal
+                                </button>
+                                {!background.startsWith('#') && (
+                                    <button
+                                        onClick={() => setBackground('#ffffff')}
+                                        style={{
+                                            width: '100%',
+                                            marginTop: '0.75rem',
+                                            padding: '0.6rem',
+                                            fontSize: '0.8rem',
+                                            color: 'white',
+                                            background: '#ef4444',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem'
+                                        }}
+                                        className="hover:bg-red-600 transition-colors"
+                                    >
+                                        <X size={14} /> Elimină Imaginea de Fundal
+                                    </button>
+                                )}
+                            </div>
+
+                            <div style={{ marginBottom: '0.5rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Sau alege o culoare</label>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                <input
+                                    type="color"
+                                    value={background.startsWith('#') ? background : '#ffffff'}
+                                    onChange={(e) => setBackground(e.target.value)}
+                                    style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
+                                />
+                                <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
+                                    {background.startsWith('#') ? background.toUpperCase() : 'IMAGINE'}
+                                </div>
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
                                 {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
                                     <button
@@ -770,6 +1035,19 @@ export default function ConfiguratorClient() {
                                 {/* Color Picker for Images (Tints/Masks) */}
                                 <div>
                                     <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare Element (pentru SVG/Vectori)</label>
+
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                                        <input
+                                            type="color"
+                                            value={el.color || '#000000'}
+                                            onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
+                                            style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
+                                        />
+                                        <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
+                                            {el.color && el.color.startsWith('#') ? el.color.toUpperCase() : (el.color ? 'PERSONALIZAT' : 'ORIGINAL')}
+                                        </div>
+                                    </div>
+
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                         {/* Reset/Original Button */}
                                         <button
@@ -799,7 +1077,7 @@ export default function ConfiguratorClient() {
                                         ))}
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                        * Notă: Aplicarea unei culori va transforma elementul într-o siluetă colorată.
+                                        * Sfat: Aplică o culoare pentru a crea o siluetă sau "ORIG" pentru culorile native.
                                     </div>
                                 </div>
 
@@ -823,13 +1101,64 @@ export default function ConfiguratorClient() {
             {/* Image Edit Panel (shared for uploaded and vectors) */}
 
             {/* Main Canvas Area */}
-            <main style={{ flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+            <main style={{ flex: 1, background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{
+                    display: 'flex',
+                    background: '#e2e8f0',
+                    padding: '4px',
+                    borderRadius: '12px',
+                    marginBottom: '2rem',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                }}>
+                    <button
+                        onClick={() => setViewMode('workspace')}
+                        style={{
+                            padding: '0.6rem 1.2rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            background: viewMode === 'workspace' ? 'white' : 'transparent',
+                            color: viewMode === 'workspace' ? 'var(--primary)' : '#64748b',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: viewMode === 'workspace' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                        }}
+                    >
+                        <Eye size={18} /> Editor 2D
+                    </button>
+                    <button
+                        onClick={() => setViewMode('3d')}
+                        style={{
+                            padding: '0.6rem 1.2rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            background: viewMode === '3d' ? 'white' : 'transparent',
+                            color: viewMode === '3d' ? 'var(--primary)' : '#64748b',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: viewMode === '3d' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                        }}
+                    >
+                        <Box size={18} /> Vedere 3D
+                    </button>
+                </div>
                 <div
                     ref={canvasRef}
                     style={{
                         width: orientation === 'landscape' ? '600px' : '400px',
                         height: orientation === 'landscape' ? '400px' : '600px',
-                        background: background,
+                        background: background.startsWith('data:') || background.startsWith('http') ? `url(${background})` : background,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
                         transition: 'all 0.3s ease',
                         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
                         position: 'relative',
@@ -844,131 +1173,157 @@ export default function ConfiguratorClient() {
                         </div>
                     )}
 
-                    {elements.map((el) => (
-                        <motion.div
-                            key={el.id}
-                            drag
-                            dragMomentum={false}
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: el.scale || 1, opacity: 1 }}
-                            onDragEnd={(e, info) => handleDragEnd(el.id, info)}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedId(el.id);
-                                if (el.type === 'text') setActiveTool('edit-text');
-                                if (el.type === 'image') setActiveTool('edit-image');
-                            }}
-                            style={{
-                                position: 'absolute',
-                                top: '20px',
-                                left: '20px',
-                                zIndex: selectedId === el.id ? 10 : 1,
-                                touchAction: 'none'
-                            }}
-                        >
-                            <div
-                                className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`}
+                    {viewMode === 'workspace' ? (
+                        elements.map((el, index) => (
+                            <motion.div
+                                key={el.id}
+                                drag
+                                dragMomentum={false}
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: el.scale || 1, opacity: 1 }}
+                                onDragEnd={(e, info) => handleDragEnd(el.id, info)}
+                                onContextMenu={(e) => handleContextMenu(e, el.id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedId(el.id);
+                                    if (el.type === 'text') setActiveTool('edit-text');
+                                    if (el.type === 'image') setActiveTool('edit-image');
+                                }}
                                 style={{
-                                    position: 'relative',
-                                    border: selectedId === el.id ? '2px solid var(--primary)' : '2px solid transparent',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    transition: 'border-color 0.2s'
+                                    position: 'absolute',
+                                    top: '20px',
+                                    left: '20px',
+                                    zIndex: selectedId === el.id ? 1000 : index,
+                                    touchAction: 'none'
                                 }}
                             >
-                                {/* Drag Handle - Only visible when selected */}
-                                {selectedId === el.id && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-30px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'var(--primary)',
-                                        color: 'white',
-                                        padding: '2px 8px',
-                                        borderRadius: '4px',
-                                        cursor: 'grabbing',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        fontSize: '10px',
-                                        fontWeight: 'bold',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                        zIndex: 11
-                                    }}>
-                                        <GripHorizontal size={14} /> TRAGE
-                                    </div>
-                                )}
-                                {el.type === 'text' ? (
-                                    <div
-                                        contentEditable
-                                        suppressContentEditableWarning
-                                        onBlur={(e) => handleTextChange(el.id, e.currentTarget.textContent || '')}
-                                        style={{
-                                            fontSize: `${el.fontSize || 24}px`,
-                                            color: el.color || '#000000',
-                                            fontFamily: el.fontFamily || 'inherit',
-                                            fontWeight: 'bold',
-                                            padding: '0.5rem',
-                                            border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
-                                            minWidth: '50px',
-                                            textAlign: 'center',
-                                            whiteSpace: 'nowrap',
-                                            lineHeight: 1.2
-                                        }}
-                                        className="editable-text"
-                                    >
-                                        {el.content}
-                                    </div>
-                                ) : (
-                                    el.color ? (
-                                        /* Colored Siliconate (SVG Mask) */
-                                        <div style={{
-                                            width: '200px', // Default container size
-                                            height: '200px',
-                                            backgroundColor: el.color,
-                                            WebkitMaskImage: `url(${el.content})`,
-                                            maskImage: `url(${el.content})`,
-                                            WebkitMaskSize: 'contain',
-                                            maskSize: 'contain',
-                                            WebkitMaskRepeat: 'no-repeat',
-                                            maskRepeat: 'no-repeat',
-                                            WebkitMaskPosition: 'center',
-                                            maskPosition: 'center',
-                                        }} />
-                                    ) : (
-                                        /* Normal Image/Sticker */
-                                        <img
-                                            src={el.content}
-                                            alt="uploaded"
-                                            draggable="false"
-                                            style={{ maxWidth: '300px', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
-                                        />
-                                    )
-                                )}
-
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
+                                <div
+                                    className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`}
                                     style={{
-                                        position: 'absolute', top: '-10px', right: '-10px',
-                                        background: 'white', borderRadius: '50%', width: '20px', height: '20px',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        border: '1px solid #ef4444', color: '#ef4444', cursor: 'pointer',
-                                        padding: 0
+                                        position: 'relative',
+                                        border: selectedId === el.id ? '2px solid var(--primary)' : '2px solid transparent',
+                                        padding: '4px',
+                                        borderRadius: '4px',
+                                        transition: 'border-color 0.2s'
                                     }}
-                                    className="delete-btn"
                                 >
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
+                                    {selectedId === el.id && (
+                                        <>
+                                            {/* Corner Resize Handles */}
+                                            {['nw', 'ne', 'sw', 'se'].map((corner) => (
+                                                <motion.div
+                                                    key={corner}
+                                                    drag
+                                                    dragMomentum={false}
+                                                    onDrag={(e, info) => {
+                                                        const delta = (corner.includes('e') ? info.delta.x : -info.delta.x) / 100;
+                                                        updateElementStyle(el.id, 'scale', Math.max(0.1, (el.scale || 1) + delta));
+                                                    }}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: corner.includes('n') ? -8 : 'auto',
+                                                        bottom: corner.includes('s') ? -8 : 'auto',
+                                                        left: corner.includes('w') ? -8 : 'auto',
+                                                        right: corner.includes('e') ? -8 : 'auto',
+                                                        width: 16, height: 16, background: 'white',
+                                                        border: '2px solid var(--primary)', borderRadius: '50%',
+                                                        cursor: corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize',
+                                                        zIndex: 110, boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                                    }}
+                                                />
+                                            ))}
+
+                                            {/* Global Delete Button */}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
+                                                style={{
+                                                    position: 'absolute', top: -20, right: -20, width: 24, height: 24,
+                                                    borderRadius: '50%', background: '#ef4444', color: 'white',
+                                                    border: '2px solid white', display: 'flex', alignItems: 'center',
+                                                    justifyContent: 'center', cursor: 'pointer', zIndex: 110,
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                }}
+                                                className="hover:bg-red-600 transition-colors"
+                                                title="Șterge element"
+                                            >
+                                                <X size={14} strokeWidth={3} />
+                                            </button>
+
+                                            {/* Drag Label */}
+                                            <div style={{
+                                                position: 'absolute', top: '-32px', left: '50%', transform: 'translateX(-50%)',
+                                                background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '4px',
+                                                cursor: 'grabbing', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px',
+                                                fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 11, whiteSpace: 'nowrap'
+                                            }}>
+                                                <GripHorizontal size={14} /> TRAGE SĂ MUȚI
+                                            </div>
+                                        </>
+                                    )}
+                                    {el.type === 'text' ? (
+                                        <div
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => handleTextChange(el.id, e.currentTarget.textContent || '')}
+                                            style={{
+                                                fontSize: `${el.fontSize || 24}px`,
+                                                color: el.color || '#000000',
+                                                fontFamily: el.fontFamily || 'inherit',
+                                                fontWeight: 'bold', padding: '0.5rem',
+                                                border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
+                                                minWidth: '50px', textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2
+                                            }}
+                                            className="editable-text"
+                                        >
+                                            {el.content}
+                                        </div>
+                                    ) : (
+                                        el.color ? (
+                                            <div style={{
+                                                width: '200px', height: '200px', backgroundColor: el.color,
+                                                WebkitMaskImage: `url(${el.content})`, maskImage: `url(${el.content})`,
+                                                WebkitMaskSize: 'contain', maskSize: 'contain',
+                                                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                                                WebkitMaskPosition: 'center', maskPosition: 'center',
+                                            }} />
+                                        ) : (
+                                            <img
+                                                src={el.content}
+                                                alt="uploaded"
+                                                draggable="false"
+                                                style={{ maxWidth: '300px', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
+                                            />
+                                        )
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#f1f5f9' }}>
+                            <model-viewer
+                                ref={modelViewerRef}
+                                src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}
+                                alt="3D Preview"
+                                shadow-intensity="1"
+                                camera-controls
+                                ar
+                                tone-mapping="neutral"
+                                style={{ width: '100%', height: '100%' }}
+                            />
+                            <button
+                                onClick={() => setViewMode('workspace')}
+                                style={{ position: 'absolute', top: 20, right: 20, background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, zIndex: 100, display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <Eye size={18} /> Înapoi la Editare
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
 
             {/* Click outside to deselect */}
             <div
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'auto', zIndex: 0 }}
                 onClick={() => { setSelectedId(null); setActiveTool(null); }}
             />
 
@@ -978,30 +1333,15 @@ export default function ConfiguratorClient() {
 
                 <div style={{ marginBottom: '1.5rem' }}>
                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Material</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {['canvas', 'forex', 'acrylic'].map((m) => (
-                            <label key={m} style={{
-                                display: 'flex', alignItems: 'center', padding: '0.75rem',
-                                border: material === m ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                borderRadius: 'var(--radius)', cursor: 'pointer',
-                                background: material === m ? 'var(--accent)' : 'transparent'
-                            }}>
-                                <input
-                                    type="radio"
-                                    name="material"
-                                    value={m}
-                                    checked={material === m}
-                                    onChange={(e) => setMaterial(e.target.value)}
-                                    style={{ marginRight: '0.75rem' }}
-                                />
-                                <span style={{ textTransform: 'capitalize' }}>
-                                    {m === 'canvas' && 'Tablou Canvas'}
-                                    {m === 'forex' && 'Placă Forex (PVC)'}
-                                    {m === 'acrylic' && 'Sticlă Acrilică'}
-                                </span>
-                            </label>
-                        ))}
-                    </div>
+                    <select
+                        value={material}
+                        onChange={(e) => setMaterial(e.target.value)}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
+                    >
+                        <option value="canvas">Tablou Canvas</option>
+                        <option value="forex">Placă Forex (PVC)</option>
+                        <option value="acrylic">Sticlă Acrilică</option>
+                    </select>
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -1048,7 +1388,6 @@ export default function ConfiguratorClient() {
                         <option value="70x100">70x100 cm</option>
                     </select>
                 </div>
-
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
                         <span>Preț:</span>
@@ -1059,8 +1398,62 @@ export default function ConfiguratorClient() {
                         Adaugă în Coș
                     </button>
                 </div>
-
             </aside>
+
+            {/* Context Menu */}
+            {
+                contextMenu.visible && (
+                    <div style={{
+                        position: 'fixed',
+                        top: contextMenu.y,
+                        left: contextMenu.x,
+                        background: 'white',
+                        border: '1px solid var(--border)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        borderRadius: '8px',
+                        padding: '0.5rem',
+                        zIndex: 1000,
+                        minWidth: '160px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px'
+                    }}>
+                        <button
+                            onClick={() => duplicateElement(contextMenu.elementId!)}
+                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
+                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
+                        >
+                            <Copy size={14} />
+                            Duplică Element
+                        </button>
+                        <button
+                            onClick={() => bringToFront(contextMenu.elementId!)}
+                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
+                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
+                        >
+                            <ArrowUp size={14} />
+                            Adu în față
+                        </button>
+                        <button
+                            onClick={() => sendToBack(contextMenu.elementId!)}
+                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
+                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
+                        >
+                            <ArrowDown size={14} />
+                            Trimite în spate
+                        </button>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '0.25rem 0' }} />
+                        <button
+                            onClick={() => deleteElement(contextMenu.elementId!)}
+                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px', color: '#ef4444' }}
+                            className="hover:bg-red-50 transition-colors flex items-center gap-2"
+                        >
+                            <X size={14} />
+                            Șterge Element
+                        </button>
+                    </div>
+                )
+            }
 
             <style jsx>{`
         .tool-btn {
@@ -1102,6 +1495,6 @@ export default function ConfiguratorClient() {
             scrollbar-width: none;  /* Firefox */
         }
       `}</style>
-        </div>
+        </div >
     );
 }
