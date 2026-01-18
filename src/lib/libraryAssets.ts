@@ -1,4 +1,4 @@
-export type LibraryCategory = 'masini' | 'familie' | 'bani' | 'travel' | 'citate';
+export type LibraryCategory = 'masini' | 'familie' | 'bani' | 'travel' | 'citate' | 'templates';
 
 export interface LibraryItem {
     id: string;

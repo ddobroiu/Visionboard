@@ -4,12 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 import {
     Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X,
     GripHorizontal, LayoutGrid, Sparkles, Copy, ArrowUp, ArrowDown,
-    Box, Eye, Minus, Plus
+    Box, Eye, Minus, Plus, Square, Circle, Heart, Hexagon, Star, LayoutTemplate, RotateCcw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Script from 'next/script';
 import { useCart } from '@/components/CartContext';
 import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
+import { VISION_TEMPLATES, VisionTemplate } from '@/lib/templates';
 
 declare global {
     namespace JSX {
@@ -34,6 +35,7 @@ interface ConfigElement {
     // Common props
     scale?: number;
     borderRadius?: string;
+    maskShape?: 'rect' | 'circle' | 'heart' | 'star' | 'hexagon';
 }
 
 const FONTS = [
@@ -197,6 +199,18 @@ export default function ConfiguratorClient() {
         }
     };
 
+    const loadTemplate = (template: VisionTemplate) => {
+        setBackground(template.background);
+        setOrientation(template.orientation);
+        const newElements: ConfigElement[] = template.elements.map(el => ({
+            ...el,
+            id: Math.random().toString(36).substr(2, 9)
+        }));
+        setElements(newElements);
+        setSelectedId(null);
+        setActiveTool(null);
+    };
+
     const handleDragEnd = (id: string, info: any) => {
         // Find the element and update its tracked x/y
         // info.point is absolute, info.offset is relative to start
@@ -221,11 +235,10 @@ export default function ConfiguratorClient() {
         if (!container) return;
 
         const onWheel = (e: WheelEvent) => {
-            if (e.ctrlKey) {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                setZoom(prev => Math.min(Math.max(0.5, prev + delta), 3));
-            }
+            e.preventDefault();
+            e.stopPropagation();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            setZoom(prev => Math.min(Math.max(0.5, prev + delta), 3));
         };
 
         container.addEventListener('wheel', onWheel, { passive: false });
@@ -290,14 +303,62 @@ export default function ConfiguratorClient() {
                     img.src = el.content;
                     img.crossOrigin = "anonymous";
                     await new Promise((r) => { img.onload = r; img.onerror = r; });
-                    const imgW = 200 * scale;
+                    const size = 200 * scale; // Standardize size for shapes
                     const imgRatio = img.width / img.height;
-                    const dh = imgW / imgRatio;
 
-                    if (el.borderRadius === '50%') {
+                    // Center point for drawing (relative to translated context)
+                    const cx = 0;
+                    const cy = 0;
+                    const r = size / 2;
+
+                    if (el.maskShape === 'circle') {
                         ctx.beginPath();
-                        ctx.arc(0, 0, Math.min(imgW, dh) / 2, 0, Math.PI * 2);
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
                         ctx.clip();
+                    } else if (el.maskShape === 'heart') {
+                        ctx.beginPath();
+                        const topY = cy - r * 0.3;
+                        ctx.moveTo(cx, cy + r * 0.7);
+                        ctx.bezierCurveTo(cx - r, cy - r * 0.5, cx - r * 0.5, cy - r * 1.2, cx, cy - r * 0.5);
+                        ctx.bezierCurveTo(cx + r * 0.5, cy - r * 1.2, cx + r, cy - r * 0.5, cx, cy + r * 0.7);
+                        ctx.clip();
+                    } else if (el.maskShape === 'hexagon') {
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const x = cx + r * Math.cos(angle);
+                            const y = cy + r * Math.sin(angle);
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.clip();
+                    } else if (el.maskShape === 'star') {
+                        ctx.beginPath();
+                        for (let i = 0; i < 10; i++) {
+                            const angle = (Math.PI / 5) * i;
+                            const rad = i % 2 === 0 ? r : r * 0.5;
+                            const x = cx + rad * Math.cos(angle - Math.PI / 2);
+                            const y = cy + rad * Math.sin(angle - Math.PI / 2);
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.clip();
+                    }
+
+                    // Draw image with "cover" logic on the standard canvas size
+                    let dw, dh, dx, dy;
+                    if (imgRatio > 1) {
+                        dh = size;
+                        dw = size * imgRatio;
+                        dx = -dw / 2;
+                        dy = -size / 2;
+                    } else {
+                        dw = size;
+                        dh = size / imgRatio;
+                        dx = -size / 2;
+                        dy = -dh / 2;
                     }
 
                     if (el.color) {
@@ -306,9 +367,9 @@ export default function ConfiguratorClient() {
                         const tCtx = tCanvas.getContext('2d')!;
                         tCtx.fillStyle = el.color; tCtx.fillRect(0, 0, img.width, img.height);
                         tCtx.globalCompositeOperation = 'destination-in'; tCtx.drawImage(img, 0, 0);
-                        ctx.drawImage(tCanvas, -imgW / 2, -dh / 2, imgW, dh);
+                        ctx.drawImage(tCanvas, dx, dy, dw, dh);
                     } else {
-                        ctx.drawImage(img, -imgW / 2, -dh / 2, imgW, dh);
+                        ctx.drawImage(img, dx, dy, dw, dh);
                     }
                 }
                 ctx.restore();
@@ -508,6 +569,10 @@ export default function ConfiguratorClient() {
                     <ImageIcon size={24} />
                     <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Fundal</span>
                 </button>
+                <button className={`tool-btn ${activeTool === 'templates' ? 'active' : ''}`} title="Design" onClick={() => setActiveTool(activeTool === 'templates' ? null : 'templates')}>
+                    <LayoutTemplate size={24} />
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Design</span>
+                </button>
                 <button className={`tool-btn ${activeTool === 'library' ? 'active' : ''}`} title="Library" onClick={() => setActiveTool(activeTool === 'library' ? null : 'library')}>
                     <LayoutGrid size={24} />
                     <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Bibliotecă</span>
@@ -518,9 +583,36 @@ export default function ConfiguratorClient() {
                 </button>
             </aside>
 
-            {/* Tool Panel (for Background, Library, Elements) */}
-            {(activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements') && (
+            {/* Tool Panel (for Background, Library, Elements, Templates) */}
+            {(activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') && (
                 <div style={{ width: '300px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9, display: 'flex', flexDirection: 'column' }}>
+
+                    {activeTool === 'templates' && (
+                        <>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
+                                {VISION_TEMPLATES.map(t => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => loadTemplate(t)}
+                                        style={{
+                                            border: '1px solid var(--border)', background: 'white', padding: '0.5rem', cursor: 'pointer', borderRadius: '12px',
+                                            overflow: 'hidden', textAlign: 'left', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '8px'
+                                        }}
+                                        className="hover:border-primary hover:shadow-md"
+                                    >
+                                        <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden' }}>
+                                            <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>{t.name}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.description}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
 
                     {activeTool === 'elements' && (
                         <>
@@ -1098,32 +1190,32 @@ export default function ConfiguratorClient() {
                                     </div>
                                 </div>
 
-                                {/* Formă Imagine (Circle/Square) */}
+                                {/* Formă Imagine (Enhanced) */}
                                 <div>
                                     <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button
-                                            onClick={() => updateElementStyle(el.id, 'borderRadius', '0')}
-                                            style={{
-                                                flex: 1, padding: '0.5rem', borderRadius: '4px',
-                                                border: !el.borderRadius || el.borderRadius === '0' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                                background: !el.borderRadius || el.borderRadius === '0' ? 'var(--accent)' : 'white',
-                                                cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
-                                            }}
-                                        >
-                                            Pătrat
-                                        </button>
-                                        <button
-                                            onClick={() => updateElementStyle(el.id, 'borderRadius', '50%')}
-                                            style={{
-                                                flex: 1, padding: '0.5rem', borderRadius: '4px',
-                                                border: el.borderRadius === '50%' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                                background: el.borderRadius === '50%' ? 'var(--accent)' : 'white',
-                                                cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
-                                            }}
-                                        >
-                                            Cerc
-                                        </button>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                                        {[
+                                            { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
+                                            { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
+                                            { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
+                                            { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
+                                            { id: 'star', label: 'Stea', icon: <Star size={14} /> }
+                                        ].map(shape => (
+                                            <button
+                                                key={shape.id}
+                                                onClick={() => updateElementStyle(el.id, 'maskShape', shape.id as any)}
+                                                style={{
+                                                    padding: '0.5rem', borderRadius: '8px',
+                                                    border: (el.maskShape || 'rect') === shape.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                                    background: (el.maskShape || 'rect') === shape.id ? 'var(--accent)' : 'white',
+                                                    cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600,
+                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                                                }}
+                                            >
+                                                {shape.icon}
+                                                {shape.label}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
@@ -1174,7 +1266,7 @@ export default function ConfiguratorClient() {
                     <button onClick={() => setZoom(prev => Math.min(3, prev + 0.1))} style={{ padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', border: '1px solid #e2e8f0' }}><Plus size={16} /></button>
                     <div style={{ width: '1px', height: '24px', background: '#e2e8f0' }} />
                     <button onClick={() => setZoom(1)} style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'var(--accent)', border: 'none', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>RESET</button>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>Ctrl + Scroll</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>Scroll</div>
                 </div>
 
                 <div
@@ -1235,7 +1327,8 @@ export default function ConfiguratorClient() {
                                         border: selectedId === el.id ? '2px solid var(--primary)' : '2px solid transparent',
                                         padding: '4px',
                                         borderRadius: '4px',
-                                        transition: 'border-color 0.2s'
+                                        transition: 'border-color 0.2s',
+                                        cursor: 'move'
                                     }}
                                 >
                                     {selectedId === el.id && (
@@ -1302,7 +1395,9 @@ export default function ConfiguratorClient() {
                                                 fontFamily: el.fontFamily || 'inherit',
                                                 fontWeight: 'bold', padding: '0.5rem',
                                                 border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
-                                                minWidth: '50px', textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2
+                                                minWidth: '50px', textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2,
+                                                pointerEvents: selectedId === el.id ? 'auto' : 'none',
+                                                cursor: selectedId === el.id ? 'text' : 'move'
                                             }}
                                             className="editable-text"
                                         >
@@ -1316,7 +1411,10 @@ export default function ConfiguratorClient() {
                                                 WebkitMaskSize: 'contain', maskSize: 'contain',
                                                 WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
                                                 WebkitMaskPosition: 'center', maskPosition: 'center',
-                                                borderRadius: el.borderRadius || '0'
+                                                clipPath: (el.maskShape === 'circle') ? 'circle(50%)' :
+                                                    (el.maskShape === 'heart') ? 'path("M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")' :
+                                                        (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                                            (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
                                             }} />
                                         ) : (
                                             <img
@@ -1324,11 +1422,17 @@ export default function ConfiguratorClient() {
                                                 alt="uploaded"
                                                 draggable="false"
                                                 style={{
+                                                    width: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
+                                                    height: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
                                                     maxWidth: '300px',
                                                     display: 'block',
                                                     pointerEvents: 'none',
                                                     userSelect: 'none',
-                                                    borderRadius: el.borderRadius || '0'
+                                                    objectFit: 'cover',
+                                                    clipPath: (el.maskShape === 'circle') ? 'circle(50% at 50% 50%)' :
+                                                        (el.maskShape === 'heart') ? 'path("M100 171.6L20.8 88.3C4.2 71.1 0 49.3 0 29.5 0 9.7 13.1 0 29.1 0 45.1 0 54.5 11.8 62.5 24.1 70.3 36.4 74.3 43.1 82.5 43.1S94.7 36.4 102.5 24.1C110.5 11.8 119.9 0 135.9 0 151.8 0 165 9.7 165 29.5 165 49.3 160.8 71.1 144.2 88.3L65 171.6")' :
+                                                            (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                                                (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
                                                 }}
                                             />
                                         )
