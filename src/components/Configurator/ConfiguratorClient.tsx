@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X, GripHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCart } from '@/components/CartContext';
 
 interface ConfigElement {
     id: string;
@@ -20,8 +21,40 @@ export default function ConfiguratorClient() {
     const [elements, setElements] = useState<ConfigElement[]>([]);
     const [background, setBackground] = useState<string>('#ffffff');
     const [activeTool, setActiveTool] = useState<string | null>(null);
+    const { addItem } = useCart();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Calcul preț simplist pt demo
+    const calculatePrice = () => {
+        let base = 100;
+        if (material === 'forex') base += 20;
+        if (material === 'acrylic') base += 50;
+
+        if (size === '30x40') base += 30;
+        if (size === '40x60') base += 60;
+        if (size === '50x70') base += 90;
+        if (size === '70x100') base += 150;
+
+        return base;
+    };
+
+    const price = calculatePrice();
+
+    const handleAddToCart = () => {
+        addItem({
+            id: `custom-${Date.now()}`,
+            title: `Visionboard Personalizat (${material}, ${size})`,
+            price: price,
+            quantity: 1,
+            currency: 'RON',
+            metadata: {
+                material,
+                size,
+                elementsCount: elements.length
+            }
+        });
+    };
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -221,9 +254,9 @@ export default function ConfiguratorClient() {
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
                         <span>Preț:</span>
-                        <span>150 Lei</span>
+                        <span>{price} Lei</span>
                     </div>
-                    <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }}>
+                    <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={handleAddToCart}>
                         <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
                         Adaugă în Coș
                     </button>
