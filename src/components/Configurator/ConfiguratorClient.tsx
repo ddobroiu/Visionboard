@@ -105,10 +105,7 @@ export default function ConfiguratorClient() {
     const bgFileInputRef = useRef<HTMLInputElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
     const modelViewerRef = useRef<any>(null);
-    const workspaceContainerRef = useRef<HTMLDivElement>(null);
-    const rotationCenterRef = useRef<{ x: number, y: number } | null>(null);
-
-    // Calcul preÈ› simplist pt demo
+    const workspaceContainerRef = useRef<HTMLDivElement>(null);// Calcul preÈ› simplist pt demo
     const calculatePrice = () => {
         let base = 100;
         if (material === 'forex') base += 20;
@@ -1093,7 +1090,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Font Size */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒrime Font ExcatÄƒ: {el.fontSize}px</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font ExcatÄƒ: {el.fontSize}px</label>
                                     <input
                                         type="range"
                                         min="12"
@@ -1120,7 +1117,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Rotation Slider */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>RotaÈ›ie: {el.rotation || 0}Â°</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
                                     <input
                                         type="range"
                                         min="0"
@@ -1137,7 +1134,7 @@ export default function ConfiguratorClient() {
                                     onClick={() => setSelectedId(null)}
                                     style={{ marginTop: '1rem', fontSize: '0.8rem' }}
                                 >
-                                    ÃŽnchide Editarea
+                                    Închide Editarea
                                 </button>
                             </div>
                         );
@@ -1154,9 +1151,9 @@ export default function ConfiguratorClient() {
                         const el = elements.find(e => e.id === selectedId)!;
                         return (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                {/* MÄƒrime (Scale) */}
+                                {/* Mărime (Scale) */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒrime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
                                     <input
                                         type="range"
                                         min="0.1"
@@ -1170,7 +1167,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Rotation Slider */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>RotaÈ›ie: {el.rotation || 0}Â°</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
                                     <input
                                         type="range"
                                         min="0"
@@ -1268,7 +1265,7 @@ export default function ConfiguratorClient() {
                                     onClick={() => setSelectedId(null)}
                                     style={{ marginTop: '1rem', fontSize: '0.8rem' }}
                                 >
-                                    ÃŽnchide Editarea
+                                    Închide Editarea
                                 </button>
                             </div>
                         );
@@ -1772,4 +1769,6 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
+
 
