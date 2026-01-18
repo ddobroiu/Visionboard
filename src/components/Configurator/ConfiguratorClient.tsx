@@ -150,7 +150,7 @@ export default function ConfiguratorClient() {
             reader.onload = (event) => {
                 const url = event.target?.result as string;
                 setUploadedImages(prev => [url, ...prev]);
-                
+
                 setPixabayResults([]); // Close search results to show uploads
                 setActiveTool('upload'); // Open library to show the upload
             };
@@ -540,7 +540,7 @@ export default function ConfiguratorClient() {
         performPixabaySearch(pixabayQuery, false, 1);
     };
 
-        const sidebarStyle: React.CSSProperties = isMobile ? {
+    const sidebarStyle: React.CSSProperties = isMobile ? {
         width: '100%',
         height: '60px',
         borderTop: '1px solid var(--border)',
@@ -644,44 +644,44 @@ export default function ConfiguratorClient() {
             </aside>
 
             <div style={toolPanelStyle}>{activeTool === 'upload' && (
-                    <>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Încărcare Imagini</h3>
-                        <button className="tool-btn active" style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem', justifyContent: 'center', gap: '8px', padding: '0.75rem' }} onClick={handleUploadClick}>
-                            <Upload size={20} />
-                            <span>Încarcă Imagine Nouă</span>
-                        </button>
-                        
-                        <div style={{ paddingBottom: '1rem', fontWeight: 600, fontSize: '0.9rem' }}>Imaginile tale ({uploadedImages.length})</div>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
-                            {uploadedImages.length > 0 ? (
-                                uploadedImages.map((url, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => addElement('image', url)}
-                                        style={{
-                                            border: '1px solid var(--border)',
-                                            borderRadius: '0.5rem',
-                                            overflow: 'hidden',
-                                            background: 'white',
-                                            cursor: 'pointer',
-                                            height: '100px',
-                                            position: 'relative'
-                                        }}
-                                        className="hover:shadow-md transition-shadow"
-                                    >
-                                        <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </button>
-                                ))
-                            ) : (
-                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                    Nu ai încărcat nicio poză încă.
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-{activeTool === 'templates' && (
+                <>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Încărcare Imagini</h3>
+                    <button className="tool-btn active" style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem', justifyContent: 'center', gap: '8px', padding: '0.75rem' }} onClick={handleUploadClick}>
+                        <Upload size={20} />
+                        <span>Încarcă Imagine Nouă</span>
+                    </button>
+
+                    <div style={{ paddingBottom: '1rem', fontWeight: 600, fontSize: '0.9rem' }}>Imaginile tale ({uploadedImages.length})</div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
+                        {uploadedImages.length > 0 ? (
+                            uploadedImages.map((url, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => addElement('image', url)}
+                                    style={{
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0.5rem',
+                                        overflow: 'hidden',
+                                        background: 'white',
+                                        cursor: 'pointer',
+                                        height: '100px',
+                                        position: 'relative'
+                                    }}
+                                    className="hover:shadow-md transition-shadow"
+                                >
+                                    <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </button>
+                            ))
+                        ) : (
+                            <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                Nu ai încărcat nicio poză încă.
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+                {activeTool === 'templates' && (
                     <>
                         <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
@@ -990,7 +990,7 @@ export default function ConfiguratorClient() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-                            
+
                             {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
                                 <button
                                     key={cat}
@@ -1462,7 +1462,7 @@ export default function ConfiguratorClient() {
                                             </button>
                                         </>
                                     )}
-                                                                       {el.type === 'text' ? (
+                                    {el.type === 'text' ? (
                                         <div
                                             contentEditable
                                             suppressContentEditableWarning
@@ -1551,7 +1551,7 @@ export default function ConfiguratorClient() {
 
 
             {/* Product Options */}
-                        {isMobile && (
+            {isMobile && (
                 <>
                     {/* Floating 3D Toggle */}
                     <button
@@ -1578,20 +1578,38 @@ export default function ConfiguratorClient() {
                     >
                         <ShoppingCart size={16} /> Comandă
                     </button>
-                    
-                     {/* Overlay for Settings */}
+
+                    {/* Overlay for Settings */}
                     {showMobileSettings && (
-                        <div 
+                        <div
                             onClick={() => setShowMobileSettings(false)}
                             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
                         />
                     )}
                 </>
             )}
-, borderLeft: '1px solid var(--border)', padding: '1.5rem', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
-                
+            <aside style={{
+                width: isMobile ? '100%' : '350px',
+                height: isMobile ? 'auto' : '100%',
+                overflowY: 'auto',
+                borderLeft: isMobile ? 'none' : '1px solid var(--border)',
+                padding: '1.5rem',
+                background: 'var(--surface)',
+                display: 'flex',
+                flexDirection: 'column',
+                zIndex: isMobile ? 1002 : 10,
+                position: isMobile ? 'fixed' : 'relative',
+                bottom: 0,
+                right: 0,
+                transform: isMobile && !showMobileSettings ? 'translateY(100%)' : 'none',
+                transition: 'transform 0.3s ease-out',
+                borderTopLeftRadius: isMobile ? '1rem' : 0,
+                borderTopRightRadius: isMobile ? '1rem' : 0,
+                boxShadow: isMobile ? '0 -10px 25px -5px rgba(0, 0, 0, 0.1)' : 'none'
+            }}>
+
                 {isMobile && (
-                   <button onClick={() => setShowMobileSettings(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none' }}><X /></button>
+                    <button onClick={() => setShowMobileSettings(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none' }}><X /></button>
                 )}
 
                 <div style={{ marginBottom: '1.5rem' }}>
