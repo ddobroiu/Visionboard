@@ -292,12 +292,18 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                     </div>
 
                     <div className="color-swatches-grid">
-                        {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
+                        {[
+                            '#ffffff', '#000000', '#f1f5f9', '#94a3b8', '#475569', '#1e293b',
+                            '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6',
+                            '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e', '#0ea5e9',
+                            '#bef264', '#fbbf24', '#2dd4bf', '#818cf8', '#c084fc', '#fb7185'
+                        ].map(color => (
                             <button
                                 key={color}
                                 onClick={() => setBackground(color)}
                                 className={`color-swatch ${background === color ? 'active' : ''}`}
                                 style={{ background: color }}
+                                title={color}
                             />
                         ))}
                     </div>
@@ -587,9 +593,48 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                     background: white;
                 }
 
-                .color-swatches-grid { display: grid; gridTemplateColumns: repeat(4, 1fr); gap: 0.5rem; }
-                .color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); cursor: pointer; }
-                .color-swatch.active { box-shadow: 0 0 0 2px var(--primary); }
+                .color-swatches-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(6, 1fr); 
+                    gap: 0.5rem; 
+                    background: #ffffff;
+                    padding: 1rem;
+                    border-radius: 12px;
+                    border: 1px solid var(--border);
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                }
+                .color-swatch { 
+                    width: 100%; 
+                    aspect-ratio: 1/1;
+                    border-radius: 8px; 
+                    border: 1px solid rgba(0,0,0,0.1); 
+                    cursor: pointer; 
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                }
+                .color-swatch:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                    z-index: 2;
+                }
+                .color-swatch.active { 
+                    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary);
+                    transform: scale(0.9);
+                    z-index: 1;
+                }
+                .color-swatch.active::after {
+                    content: '✓';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: white;
+                    font-size: 0.7rem;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    filter: invert(0);
+                }
+                /* For white active swatch, show black checkmark */
+                .color-swatch[title="#ffffff"].active::after { color: black; text-shadow: none; }
 
                 .toggle-btn {
                     display: flex;

@@ -1,8 +1,7 @@
 import { appendOrder, type NewOrder, type Address, type Billing } from "@/lib/orderStore";
-import { Resend } from 'resend';
 import { prisma } from "@/lib/prisma";
 import bcrypt from 'bcryptjs';
-import { sendOrderConfirmationEmail, sendNewOrderAdminEmail } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendNewOrderAdminEmail, sendWelcomeEmail } from "@/lib/email";
 
 // --- OBLIO CONFIG ---
 const OBLIO_EMAIL = process.env.OBLIO_EMAIL || ""; // "ionut@tablou.net"
@@ -242,9 +241,8 @@ export async function fulfillOrder(input: {
                     userId = newUser.id;
                     userPassword = generatedPass;
 
-                    // Send welcome email with password? 
-                    // tablou code didn't explicitly send password in welcome email in the snippet I saw, 
-                    // but we can assume normal flow.
+                    // Send welcome email with password
+                    await sendWelcomeEmail(address.email, address.nume_prenume, generatedPass).catch(e => console.error("Welcome email failed:", e));
                 }
             }
         } catch (e) {

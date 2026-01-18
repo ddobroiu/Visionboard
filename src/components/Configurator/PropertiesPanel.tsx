@@ -25,14 +25,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!el || !selectedId) return null;
 
     const panelStyle: React.CSSProperties = {
-        width: '250px',
-        borderRight: '1px solid var(--border)',
-        background: 'var(--surface)',
-        padding: '1rem',
+        width: '100%',
+        background: 'transparent',
+        padding: '0',
         zIndex: 9,
-        position: 'relative' // Or absolute if handled by parent layout, preserving existing behavior
-        // The original was conditional rendering in the flow, so layout depends on parent.
-        // We'll assume this is placed where the original panels were.
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
     };
 
     if (activeTool === 'edit-text' && el.type === 'text') {

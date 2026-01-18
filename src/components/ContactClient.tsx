@@ -20,15 +20,6 @@ export default function ContactClient() {
         setLoading(true);
         setError(null);
 
-        // Simulate API call for now
-        setTimeout(() => {
-            setSent(true);
-            setForm({ name: "", email: "", phone: "", message: "" });
-            setLoading(false);
-        }, 1000);
-
-        // Uncomment when API is ready
-        /*
         try {
             const response = await fetch('/api/contact', {
                 method: 'POST',
@@ -44,7 +35,6 @@ export default function ContactClient() {
         } finally {
             setLoading(false);
         }
-        */
     }
 
     return (

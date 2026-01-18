@@ -145,7 +145,7 @@ export default function ConfiguratorClient() {
         background: 'var(--surface)',
         padding: '1rem',
         zIndex: 19,
-        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload') ? 'flex' : 'none',
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload' || !!selectedId) ? 'flex' : 'none',
         flexDirection: 'column',
         boxShadow: '0 -5px 15px -3px rgba(0,0,0,0.1)',
         borderTopLeftRadius: '16px',
@@ -160,7 +160,7 @@ export default function ConfiguratorClient() {
         background: 'var(--surface)',
         padding: '1rem',
         zIndex: 9,
-        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload') ? 'flex' : 'none',
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload' || !!selectedId) ? 'flex' : 'none',
         flexDirection: 'column',
         boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
     };
@@ -229,16 +229,18 @@ export default function ConfiguratorClient() {
                     isLoadingSaved={isLoadingSaved}
                     fetchDesigns={fetchDesigns}
                 />
-            </div>
 
-            <PropertiesPanel
-                activeTool={activeTool}
-                selectedId={selectedId}
-                elements={elements}
-                updateElementStyle={updateElementStyle}
-                setSelectedId={setSelectedId}
-                deleteElement={deleteElement}
-            />
+                {selectedId && (
+                    <PropertiesPanel
+                        activeTool={activeTool}
+                        selectedId={selectedId}
+                        elements={elements}
+                        updateElementStyle={updateElementStyle}
+                        setSelectedId={setSelectedId}
+                        deleteElement={deleteElement}
+                    />
+                )}
+            </div>
 
             <Workspace
                 orientation={orientation}

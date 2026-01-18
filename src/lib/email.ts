@@ -1,36 +1,36 @@
 import { Resend } from 'resend';
 
 const getResendClient = () => {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        console.warn('RESEND_API_KEY is missing');
-        return new Resend('re_123456789');
-    }
-    return new Resend(apiKey);
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('RESEND_API_KEY is missing');
+    return new Resend('re_123456789');
+  }
+  return new Resend(apiKey);
 };
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 if (!APP_URL) {
-    console.warn('Warning: NEXT_PUBLIC_APP_URL or PUBLIC_BASE_URL not set — email links may point to an incorrect origin.');
+  console.warn('Warning: NEXT_PUBLIC_APP_URL or PUBLIC_BASE_URL not set — email links may point to an incorrect origin.');
 }
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Visionboard <no-reply@visionboard.ro>';
 
 // --- TEMPLATE COMUN (Folosit de toate emailurile) ---
 export function getHtmlTemplate({
-    title,
-    message,
-    buttonText,
-    buttonUrl,
-    footerText
+  title,
+  message,
+  buttonText,
+  buttonUrl,
+  footerText
 }: {
-    title: string;
-    message: string;
-    buttonText: string;
-    buttonUrl: string;
-    footerText?: string;
+  title: string;
+  message: string;
+  buttonText: string;
+  buttonUrl: string;
+  footerText?: string;
 }) {
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -80,51 +80,55 @@ export function getHtmlTemplate({
 }
 
 // --- 1. EMAIL BUN VENIT ---
-export async function sendWelcomeEmail(to: string, name: string) {
-    const html = getHtmlTemplate({
-        title: "Bine ai venit pe Visionboard!",
-        message: `Salut, ${name}! Contul tău a fost creat cu succes. Poți începe să plasezi comenzi și să gestionezi grafica direct din contul tău.`,
-        buttonText: "Accesează contul",
-        buttonUrl: `${APP_URL}/account`,
-        footerText: "Dacă nu ai creat acest cont, ignoră acest email."
-    });
+export async function sendWelcomeEmail(to: string, name: string, password?: string) {
+  const passwordHtml = password ? `<p style="background: #f3f4f6; padding: 10px; border-radius: 4px; border: 1px dashed #4f46e5; text-align: center; margin: 15px 0;">Parola ta temporară este: <strong>${password}</strong></p>` : '';
 
-    await getResendClient().emails.send({
-        from: EMAIL_FROM,
-        to,
-        subject: 'Bine ai venit pe Visionboard!',
-        html,
-    });
+  const html = getHtmlTemplate({
+    title: "Bine ai venit pe Visionboard!",
+    message: `Salut, ${name}! Contul tău a fost creat cu succes. Poți începe să plasezi comenzi și să gestionezi grafica direct din contul tău. ${password ? 'Am generat o parolă temporară pentru tine, te rugăm să o schimbi după prima autentificare.' : ''}`,
+    buttonText: "Accesează contul",
+    buttonUrl: `${APP_URL}/account`,
+    footerText: "Dacă nu ai creat acest cont, ignoră acest email."
+  });
+
+  const finalHtml = password ? html.replace('</p>', `</p>${passwordHtml}`) : html;
+
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to,
+    subject: 'Bine ai venit pe Visionboard!',
+    html: finalHtml,
+  });
 }
 
 // --- 2. EMAIL RESETARE PAROLĂ ---
 export async function sendPasswordResetEmail(to: string, token: string) {
-    const resetLink = `${APP_URL}/login/reset?token=${token}`;
+  const resetLink = `${APP_URL}/login/reset?token=${token}`;
 
-    const html = getHtmlTemplate({
-        title: "Resetare Parolă",
-        message: "Am primit o cerere de resetare a parolei pentru contul tău Visionboard. Apasă pe butonul de mai jos pentru a seta o parolă nouă.",
-        buttonText: "Resetează Parola",
-        buttonUrl: resetLink,
-        footerText: "Dacă nu ai cerut acest lucru, poți ignora acest email."
-    });
+  const html = getHtmlTemplate({
+    title: "Resetare Parolă",
+    message: "Am primit o cerere de resetare a parolei pentru contul tău Visionboard. Apasă pe butonul de mai jos pentru a seta o parolă nouă.",
+    buttonText: "Resetează Parola",
+    buttonUrl: resetLink,
+    footerText: "Dacă nu ai cerut acest lucru, poți ignora acest email."
+  });
 
-    await getResendClient().emails.send({
-        from: EMAIL_FROM,
-        to,
-        subject: 'Resetare parolă Visionboard',
-        html,
-    });
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to,
+    subject: 'Resetare parolă Visionboard',
+    html,
+  });
 }
 
 // --- 3. EMAIL CONFIRMARE COMANDĂ (CLIENT) ---
 export async function sendOrderConfirmationEmail(order: any) {
-    const orderIdShort = order.id.slice(-6).toUpperCase();
-    const viewUrl = `${APP_URL}/account/orders/${order.id}`;
+  const orderIdShort = order.id.slice(-6).toUpperCase();
+  const viewUrl = `${APP_URL}/account/orders/${order.id}`;
 
-    const isOP = order.paymentMethod === 'OP';
+  const isOP = order.paymentMethod === 'OP';
 
-    const bankDetailsHtml = isOP ? `
+  const bankDetailsHtml = isOP ? `
     <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin: 24px 0;">
       <h3 style="margin-top:0; color: #0369a1; font-size: 16px;">Instrucțiuni de Plată (Ordin de Plată)</h3>
       <p style="font-size: 14px; margin-bottom: 12px; color: #444;">Te rugăm să efectuezi plata în contul de mai jos. Comanda va fi procesată după confirmarea plății.</p>
@@ -158,40 +162,40 @@ export async function sendOrderConfirmationEmail(order: any) {
     </div>
   ` : '';
 
-    const html = getHtmlTemplate({
-        title: `Comanda #${orderIdShort} a fost înregistrată!`,
-        message: `Salut! Îți mulțumim pentru comandă. Am primit solicitarea ta în valoare de ${order.totalAmount} ${order.currency || 'RON'}. 
+  const html = getHtmlTemplate({
+    title: `Comanda #${orderIdShort} a fost înregistrată!`,
+    message: `Salut! Îți mulțumim pentru comandă. Am primit solicitarea ta în valoare de ${order.totalAmount} ${order.currency || 'RON'}. 
               ${isOP ? 'Te rugăm să efectuezi plata conform instrucțiunilor de mai jos.' : 'Te vom notifica imediat ce expediem produsele.'}`,
-        buttonText: "Vezi detalii comandă",
-        buttonUrl: viewUrl,
-        footerText: "Mulțumim că ai ales Visionboard!"
-    });
+    buttonText: "Vezi detalii comandă",
+    buttonUrl: viewUrl,
+    footerText: "Mulțumim că ai ales Visionboard!"
+  });
 
-    const finalHtml = html.replace('<div style="text-align: center; margin: 30px 0;">', `${bankDetailsHtml}<div style="text-align: center; margin: 30px 0;">`);
+  const finalHtml = html.replace('<div style="text-align: center; margin: 30px 0;">', `${bankDetailsHtml}<div style="text-align: center; margin: 30px 0;">`);
 
-    await getResendClient().emails.send({
-        from: EMAIL_FROM,
-        to: order.userEmail,
-        subject: `Confirmare Comandă #${orderIdShort}`,
-        html: finalHtml,
-    });
+  await getResendClient().emails.send({
+    from: EMAIL_FROM,
+    to: order.userEmail,
+    subject: `Confirmare Comandă #${orderIdShort}`,
+    html: finalHtml,
+  });
 }
 
 // --- 4. EMAIL NOTIFICARE ADMIN (COMANDĂ NOUĂ) ---
 export async function sendNewOrderAdminEmail(order: any) {
-    const orderIdShort = order.id.slice(-6).toUpperCase();
-    const adminUrl = `${APP_URL}/admin/orders/${order.id}`;
+  const orderIdShort = order.id.slice(-6).toUpperCase();
+  const adminUrl = `${APP_URL}/admin/orders/${order.id}`;
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'contact@visionboard.ro';
+  const adminEmail = process.env.ADMIN_EMAIL || 'contact@visionboard.ro';
 
-    const clientName = order.shippingAddress?.name || 'Necunoscut';
-    const clientPhone = order.shippingAddress?.phone || 'Nespecificat';
-    const clientEmail = order.shippingAddress?.email || order.user?.email || 'Nespecificat';
-    const deliveryAddress = order.shippingAddress
-        ? `${order.shippingAddress.street || ''}, ${order.shippingAddress.city || ''}, ${order.shippingAddress.county || ''}, ${order.shippingAddress.postalCode || ''}`
-        : 'Nespecificată';
+  const clientName = order.shippingAddress?.name || 'Necunoscut';
+  const clientPhone = order.shippingAddress?.phone || 'Nespecificat';
+  const clientEmail = order.shippingAddress?.email || order.user?.email || 'Nespecificat';
+  const deliveryAddress = order.shippingAddress
+    ? `${order.shippingAddress.street || ''}, ${order.shippingAddress.city || ''}, ${order.shippingAddress.county || ''}, ${order.shippingAddress.postalCode || ''}`
+    : 'Nespecificată';
 
-    const message = `
+  const message = `
     <strong>Comandă nouă #${orderIdShort}</strong><br/><br/>
     
     <strong>📦 Detalii comandă:</strong><br/>
@@ -208,62 +212,62 @@ export async function sendNewOrderAdminEmail(order: any) {
     ${deliveryAddress}
   `;
 
-    const html = getHtmlTemplate({
-        title: "Comandă Nouă!",
-        message: message,
-        buttonText: "Gestionează în Admin",
-        buttonUrl: adminUrl,
-        footerText: "Notificare internă sistem."
-    });
+  const html = getHtmlTemplate({
+    title: "Comandă Nouă!",
+    message: message,
+    buttonText: "Gestionează în Admin",
+    buttonUrl: adminUrl,
+    footerText: "Notificare internă sistem."
+  });
 
-    await getResendClient().emails.send({
-        from: 'Visionboard System <no-reply@visionboard.ro>',
-        to: adminEmail,
-        subject: `[ADMIN] Comandă Nouă #${orderIdShort} - ${clientName}`,
-        html,
-    });
+  await getResendClient().emails.send({
+    from: 'Visionboard System <no-reply@visionboard.ro>',
+    to: adminEmail,
+    subject: `[ADMIN] Comandă Nouă #${orderIdShort} - ${clientName}`,
+    html,
+  });
 }
 
 // --- 5. EMAIL FORMULAR CONTACT (NOU) ---
 export async function sendContactFormEmail(data: { name: string; email: string; phone?: string; message: string }) {
-    const { name, email, phone, message } = data;
+  const { name, email, phone, message } = data;
 
-    const fromEmail = 'Visionboard Contact <no-reply@visionboard.ro>';
-    const adminEmail = process.env.ADMIN_EMAIL || 'contact@visionboard.ro';
+  const fromEmail = 'Visionboard Contact <no-reply@visionboard.ro>';
+  const adminEmail = process.env.ADMIN_EMAIL || 'contact@visionboard.ro';
 
-    const html = getHtmlTemplate({
-        title: "Mesaj Nou de pe Site",
-        message: `Ai primit un mesaj nou de la <strong>${name}</strong> (${email}).`,
-        buttonText: "Răspunde pe Email",
-        buttonUrl: `mailto:${email}`,
-        footerText: `Telefon client: ${phone || 'Nespecificat'}`
-    });
+  const html = getHtmlTemplate({
+    title: "Mesaj Nou de pe Site",
+    message: `Ai primit un mesaj nou de la <strong>${name}</strong> (${email}).`,
+    buttonText: "Răspunde pe Email",
+    buttonUrl: `mailto:${email}`,
+    footerText: `Telefon client: ${phone || 'Nespecificat'}`
+  });
 
-    const contentHtml = html.replace(
-        '<p class="text">',
-        `<p class="text">
+  const contentHtml = html.replace(
+    '<p class="text">',
+    `<p class="text">
          <strong>Mesaj primit:</strong><br/>
          <em style="display:block; background:#f3f4f6; padding:15px; border-left: 4px solid #4f46e5; margin-top:10px; border-radius: 4px;">${message.replace(/\n/g, '<br>')}</em>
          <br/>`
-    );
+  );
 
-    try {
-        const result = await getResendClient().emails.send({
-            from: fromEmail,
-            to: adminEmail,
-            replyTo: email,
-            subject: `[Contact] Mesaj nou de la ${name}`,
-            html: contentHtml,
-        });
+  try {
+    const result = await getResendClient().emails.send({
+      from: fromEmail,
+      to: adminEmail,
+      replyTo: email,
+      subject: `[Contact] Mesaj nou de la ${name}`,
+      html: contentHtml,
+    });
 
-        if (result.error) {
-            console.error("Resend API Error:", result.error);
-            throw new Error(result.error.message);
-        }
-
-        return { success: true, id: result.data?.id };
-    } catch (error) {
-        console.error("Eroare la trimiterea emailului de contact:", error);
-        throw error;
+    if (result.error) {
+      console.error("Resend API Error:", result.error);
+      throw new Error(result.error.message);
     }
+
+    return { success: true, id: result.data?.id };
+  } catch (error) {
+    console.error("Eroare la trimiterea emailului de contact:", error);
+    throw error;
+  }
 }
