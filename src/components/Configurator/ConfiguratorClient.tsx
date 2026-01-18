@@ -36,6 +36,7 @@ interface ConfigElement {
     scale?: number;
     borderRadius?: string;
     maskShape?: 'rect' | 'circle' | 'heart' | 'star' | 'hexagon';
+    rotation?: number;
 }
 
 const FONTS = [
@@ -184,6 +185,7 @@ export default function ConfiguratorClient() {
             fontFamily: type === 'text' ? 'var(--font-outfit), sans-serif' : undefined,
             fontWeight: type === 'text' ? 'bold' : undefined,
             scale: 1,
+            rotation: 0, // Default rotation
         };
         setElements([...elements, newElement]);
         setSelectedId(newElement.id); // Auto-select new items
@@ -289,6 +291,7 @@ export default function ConfiguratorClient() {
             for (const el of elements) {
                 ctx.save();
                 ctx.translate((el.x + 20) * scale, (el.y + 20) * scale);
+                ctx.rotate(((el.rotation || 0) * Math.PI) / 180);
                 ctx.scale(el.scale || 1, el.scale || 1);
 
                 if (el.type === 'text') {
@@ -1104,6 +1107,19 @@ export default function ConfiguratorClient() {
                                     </select>
                                 </div>
 
+                                {/* Rotation Slider */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={el.rotation || 0}
+                                        onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
+                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                    />
+                                </div>
+
                                 {/* Buttons */}
                                 <button
                                     className="btn btn-outline"
@@ -1137,6 +1153,19 @@ export default function ConfiguratorClient() {
                                         step="0.05"
                                         value={el.scale || 1}
                                         onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
+                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                    />
+                                </div>
+
+                                {/* Rotation Slider */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="360"
+                                        value={el.rotation || 0}
+                                        onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
                                         style={{ width: '100%', accentColor: 'var(--primary)' }}
                                     />
                                 </div>
@@ -1317,7 +1346,8 @@ export default function ConfiguratorClient() {
                                     top: '20px',
                                     left: '20px',
                                     zIndex: selectedId === el.id ? 1000 : index,
-                                    touchAction: 'none'
+                                    touchAction: 'none',
+                                    rotate: el.rotation || 0
                                 }}
                             >
                                 <div
@@ -1357,6 +1387,25 @@ export default function ConfiguratorClient() {
                                                 />
                                             ))}
 
+                                            {/* Rotation Handle */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const currentRotation = el.rotation || 0;
+                                                    updateElementStyle(el.id, 'rotation', (currentRotation + 45) % 360);
+                                                }}
+                                                style={{
+                                                    position: 'absolute', top: -20, left: -20, width: 24, height: 24,
+                                                    borderRadius: '50%', background: 'white', color: 'var(--primary)',
+                                                    border: '2px solid var(--primary)', display: 'flex', alignItems: 'center',
+                                                    justifyContent: 'center', cursor: 'pointer', zIndex: 110,
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                                }}
+                                                title="Rotește 45°"
+                                            >
+                                                <RotateCcw size={14} strokeWidth={3} />
+                                            </button>
+
                                             {/* Global Delete Button */}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
@@ -1372,16 +1421,6 @@ export default function ConfiguratorClient() {
                                             >
                                                 <X size={14} strokeWidth={3} />
                                             </button>
-
-                                            {/* Drag Label */}
-                                            <div style={{
-                                                position: 'absolute', top: '-32px', left: '50%', transform: 'translateX(-50%)',
-                                                background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '4px',
-                                                cursor: 'grabbing', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px',
-                                                fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 11, whiteSpace: 'nowrap'
-                                            }}>
-                                                <GripHorizontal size={14} /> TRAGE SĂ MUȚI
-                                            </div>
                                         </>
                                     )}
                                     {el.type === 'text' ? (
