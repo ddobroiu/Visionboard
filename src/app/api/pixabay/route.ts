@@ -5,6 +5,7 @@ export async function GET(request: Request) {
     const query = searchParams.get('q');
     const transparent = searchParams.get('transparent') === 'true';
     const orientation = searchParams.get('orientation') || 'all';
+    const page = searchParams.get('page') || '1';
     const apiKey = process.env.PIXABAY_API_KEY;
 
     if (!apiKey) {
@@ -17,15 +18,16 @@ export async function GET(request: Request) {
 
     const transparentParam = transparent ? '&colors=transparent' : '';
     const orientationParam = orientation !== 'all' ? `&orientation=${orientation}` : '';
+    const pagingParam = `&page=${page}&per_page=40`;
 
     try {
         // Try Romanian search first as the site is in Romanian
-        const response = await fetch(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&per_page=100&safesearch=true&lang=ro${transparentParam}${orientationParam}`);
+        const response = await fetch(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&safesearch=true&lang=ro${transparentParam}${orientationParam}${pagingParam}`);
         let data = await response.json();
 
         // If no results in Romanian, try English search as a fallback
         if (!data.hits || data.hits.length === 0) {
-            const fallbackResponse = await fetch(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&per_page=100&safesearch=true${transparentParam}${orientationParam}`);
+            const fallbackResponse = await fetch(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&safesearch=true${transparentParam}${orientationParam}${pagingParam}`);
             data = await fallbackResponse.json();
         }
 

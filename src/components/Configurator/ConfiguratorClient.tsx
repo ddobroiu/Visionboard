@@ -47,7 +47,9 @@ export default function ConfiguratorClient() {
     const [isSearching, setIsSearching] = useState(false);
     const [pixabayTransparent, setPixabayTransparent] = useState(false);
     const [pixabayOrientation, setPixabayOrientation] = useState<string>('all');
+    const [pixabayPage, setPixabayPage] = useState(1);
     const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+    const [pixabayError, setPixabayError] = useState<string | null>(null);
 
     const { addItem } = useCart();
 
@@ -151,30 +153,59 @@ export default function ConfiguratorClient() {
     // Auto-search when transparency or orientation filter changes
     useEffect(() => {
         if (pixabayQuery) {
-            performPixabaySearch(pixabayQuery);
+            setPixabayPage(1);
+            performPixabaySearch(pixabayQuery, false, 1);
         }
     }, [pixabayTransparent, pixabayOrientation]);
 
-    const performPixabaySearch = async (query: string) => {
+    const performPixabaySearch = async (query: string, isLoadMore = false, pageNum = 1) => {
         if (!query) return;
         setIsSearching(true);
+        setPixabayError(null);
+        if (!isLoadMore) setPixabayResults([]); // Show loading state by clearing results
+
         try {
-            const res = await fetch(`/api/pixabay?q=${encodeURIComponent(query)}&transparent=${pixabayTransparent}&orientation=${pixabayOrientation}`);
+            const res = await fetch(`/api/pixabay?q=${encodeURIComponent(query)}&transparent=${pixabayTransparent}&orientation=${pixabayOrientation}&page=${pageNum}`);
             const data = await res.json();
+
+            if (data.error) {
+                setPixabayError(data.error);
+                return;
+            }
+
             if (data.hits) {
-                setPixabayResults(data.hits);
-                setActiveLibraryCategory('search' as any); // Always treat as search results
+                if (data.hits.length === 0 && isLoadMore) {
+                    setPixabayError("Nu mai sunt rezultate de afișat.");
+                } else {
+                    if (isLoadMore) {
+                        setPixabayResults(prev => [...prev, ...data.hits]);
+                    } else {
+                        setPixabayResults(data.hits);
+                        if (data.hits.length === 0) {
+                            setPixabayError(`Nu am găsit rezultate pentru "${query}"`);
+                        }
+                    }
+                }
+                setActiveLibraryCategory('search' as any);
             }
         } catch (error) {
             console.error('Search error:', error);
+            setPixabayError("Eroare la comunicarea cu serverul.");
         } finally {
             setIsSearching(false);
         }
     };
 
+    const handleLoadMore = () => {
+        const nextPage = pixabayPage + 1;
+        setPixabayPage(nextPage);
+        performPixabaySearch(pixabayQuery, true, nextPage);
+    };
+
     const handlePixabaySearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        performPixabaySearch(pixabayQuery);
+        setPixabayPage(1);
+        performPixabaySearch(pixabayQuery, false, 1);
     };
 
     return (
@@ -334,7 +365,8 @@ export default function ConfiguratorClient() {
                                         onClick={() => {
                                             const query = cat.charAt(0).toUpperCase() + cat.slice(1);
                                             setPixabayQuery(query);
-                                            performPixabaySearch(query);
+                                            setPixabayPage(1);
+                                            performPixabaySearch(query, false, 1);
                                         }}
                                         style={{
                                             padding: '0.4rem 0.8rem',
@@ -397,27 +429,54 @@ export default function ConfiguratorClient() {
                                         </div>
                                     )
                                 ) : pixabayResults.length > 0 ? (
-                                    pixabayResults.map(hit => (
+                                    <>
+                                        {pixabayResults.map(hit => (
+                                            <button
+                                                key={hit.id}
+                                                onClick={() => addElement('image', hit.url)}
+                                                style={{
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '0.5rem',
+                                                    overflow: 'hidden',
+                                                    background: 'white',
+                                                    cursor: 'pointer',
+                                                    height: '100px',
+                                                    position: 'relative'
+                                                }}
+                                                className="hover:shadow-md transition-shadow"
+                                            >
+                                                <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </button>
+                                        ))}
                                         <button
-                                            key={hit.id}
-                                            onClick={() => addElement('image', hit.url)}
+                                            onClick={handleLoadMore}
+                                            disabled={isSearching}
                                             style={{
+                                                gridColumn: 'span 2',
+                                                padding: '0.75rem',
+                                                marginTop: '0.5rem',
+                                                borderRadius: '8px',
                                                 border: '1px solid var(--border)',
-                                                borderRadius: '0.5rem',
-                                                overflow: 'hidden',
                                                 background: 'white',
+                                                color: 'var(--primary)',
+                                                fontWeight: 600,
                                                 cursor: 'pointer',
-                                                height: '100px',
-                                                position: 'relative'
+                                                fontSize: '0.875rem',
+                                                marginBottom: '1rem'
                                             }}
-                                            className="hover:shadow-md transition-shadow"
                                         >
-                                            <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            {isSearching ? 'Se încarcă...' : 'Încarcă mai multe rezultate'}
                                         </button>
-                                    ))
+                                    </>
                                 ) : (
                                     <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                        {pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie."}
+                                        {pixabayError || (pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie.")}
+                                    </div>
+                                )}
+
+                                {pixabayError && pixabayResults.length > 0 && (
+                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
+                                        {pixabayError}
                                     </div>
                                 )}
                             </div>
