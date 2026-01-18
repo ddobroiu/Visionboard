@@ -1095,55 +1095,6 @@ export default function ConfiguratorClient() {
 
             {/* Main Canvas Area */}
             <main style={{ flex: 1, background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                <div style={{
-                    display: 'flex',
-                    background: '#e2e8f0',
-                    padding: '4px',
-                    borderRadius: '12px',
-                    marginBottom: '2rem',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
-                }}>
-                    <button
-                        onClick={() => setViewMode('workspace')}
-                        style={{
-                            padding: '0.6rem 1.2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.6rem',
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            borderRadius: '10px',
-                            background: viewMode === 'workspace' ? 'white' : 'transparent',
-                            color: viewMode === 'workspace' ? 'var(--primary)' : '#64748b',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: viewMode === 'workspace' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
-                        }}
-                    >
-                        <Eye size={18} /> Editor 2D
-                    </button>
-                    <button
-                        onClick={() => setViewMode('3d')}
-                        style={{
-                            padding: '0.6rem 1.2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.6rem',
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            borderRadius: '10px',
-                            background: viewMode === '3d' ? 'white' : 'transparent',
-                            color: viewMode === '3d' ? 'var(--primary)' : '#64748b',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: viewMode === '3d' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
-                        }}
-                    >
-                        <Box size={18} /> Vedere 3D
-                    </button>
-                </div>
                 <div
                     ref={canvasRef}
                     style={{
@@ -1379,18 +1330,87 @@ export default function ConfiguratorClient() {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Dimensiune (cm)</label>
-                    <select
-                        value={size}
-                        onChange={(e) => setSize(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem' }}
-                    >
-                        <option value="20x30">20x30 cm</option>
-                        <option value="30x40">30x40 cm</option>
-                        <option value="40x60">40x60 cm</option>
-                        <option value="50x70">50x70 cm</option>
-                        <option value="70x100">70x100 cm</option>
-                    </select>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Previzualizare</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {/* 3D Preview Box */}
+                        <div
+                            onClick={() => setViewMode('3d')}
+                            style={{
+                                height: '140px',
+                                background: '#f1f5f9',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                border: viewMode === '3d' ? '2px solid var(--primary)' : '2px solid #e2e8f0',
+                                position: 'relative',
+                                transition: 'all 0.2s'
+                            }}
+                            className="group hover:border-primary"
+                        >
+                            <model-viewer
+                                key={`sidebar-3d-${orientation}`}
+                                src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}
+                                alt="3D Visionboard"
+                                shadow-intensity="1"
+                                auto-rotate
+                                tone-mapping="neutral"
+                                style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+                            />
+                            <div style={{
+                                position: 'absolute', bottom: 8, right: 8,
+                                background: 'white', padding: '4px 8px', borderRadius: '4px',
+                                fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}>
+                                <Box size={12} /> 3D PREVIEW
+                            </div>
+                        </div>
+
+                        {/* 2D Mini Preview */}
+                        <div
+                            onClick={() => setViewMode('workspace')}
+                            style={{
+                                height: '80px',
+                                background: background.startsWith('#') ? background : '#ffffff',
+                                backgroundImage: !background.startsWith('#') ? `url(${background})` : 'none',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                cursor: 'pointer',
+                                border: viewMode === 'workspace' ? '2px solid var(--primary)' : '2px solid #e2e8f0',
+                                position: 'relative',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s'
+                            }}
+                            className="hover:border-primary"
+                        >
+                            <div style={{ transform: 'scale(0.15)', pointerEvents: 'none', position: 'relative', width: orientation === 'landscape' ? '600px' : '400px', height: orientation === 'landscape' ? '400px' : '600px' }}>
+                                {elements.map(el => (
+                                    <div key={el.id} style={{
+                                        position: 'absolute',
+                                        left: el.x + 20,
+                                        top: el.y + 20,
+                                        width: '100px',
+                                        height: '20px',
+                                        background: el.color || '#cbd5e1',
+                                        opacity: 0.6,
+                                        borderRadius: '4px'
+                                    }} />
+                                ))}
+                            </div>
+                            <div style={{
+                                position: 'absolute', bottom: 8, right: 8,
+                                background: 'white', padding: '4px 8px', borderRadius: '4px',
+                                fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}>
+                                <Eye size={12} /> NORMAL (2D)
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
