@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X, GripHorizontal, LayoutGrid } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/components/CartContext';
@@ -18,6 +18,8 @@ interface ConfigElement {
     color?: string;
     fontFamily?: string;
     fontWeight?: string;
+    // Common props
+    scale?: number;
 }
 
 const FONTS = [
@@ -31,15 +33,24 @@ const FONTS = [
 export default function ConfiguratorClient() {
     const [material, setMaterial] = useState('canvas');
     const [size, setSize] = useState('40x60');
+    const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
 
     const [elements, setElements] = useState<ConfigElement[]>([]);
     const [background, setBackground] = useState<string>('#ffffff');
     const [activeTool, setActiveTool] = useState<string | null>(null);
     const [activeLibraryCategory, setActiveLibraryCategory] = useState<LibraryCategory>('masini');
     const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    // Pixabay Search State
+    const [pixabayQuery, setPixabayQuery] = useState('');
+    const [pixabayResults, setPixabayResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [pixabayTransparent, setPixabayTransparent] = useState(false);
+
     const { addItem } = useCart();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const canvasRef = useRef<HTMLDivElement>(null);
 
     // Calcul preț simplist pt demo
     const calculatePrice = () => {
@@ -99,10 +110,24 @@ export default function ConfiguratorClient() {
             color: type === 'text' ? '#000000' : undefined,
             fontFamily: type === 'text' ? 'var(--font-outfit), sans-serif' : undefined,
             fontWeight: type === 'text' ? 'bold' : undefined,
+            scale: 1,
         };
         setElements([...elements, newElement]);
         setSelectedId(newElement.id); // Auto-select new items
         if (type === 'text') setActiveTool('edit-text');
+    };
+
+    const handleDragEnd = (id: string, info: any) => {
+        // Find the element and update its tracked x/y
+        // info.point is absolute, info.offset is relative to start
+        // For simplicity with framer motion 'drag', we just let motion handle visual, 
+        // but we can track coordinates if we want to save them.
+        setElements(prev => prev.map(el => {
+            if (el.id === id) {
+                return { ...el, x: el.x + info.offset.x, y: el.y + info.offset.y };
+            }
+            return el;
+        }));
     };
 
     const removeElement = (id: string) => {
@@ -116,6 +141,35 @@ export default function ConfiguratorClient() {
 
     const updateElementStyle = (id: string, property: keyof ConfigElement, value: any) => {
         setElements(elements.map(el => el.id === id ? { ...el, [property]: value } : el));
+    };
+
+    // Auto-search when transparency filter changes
+    useEffect(() => {
+        if (pixabayQuery) {
+            performPixabaySearch(pixabayQuery);
+        }
+    }, [pixabayTransparent]);
+
+    const performPixabaySearch = async (query: string) => {
+        if (!query) return;
+        setIsSearching(true);
+        try {
+            const res = await fetch(`/api/pixabay?q=${encodeURIComponent(query)}&transparent=${pixabayTransparent}`);
+            const data = await res.json();
+            if (data.hits) {
+                setPixabayResults(data.hits);
+                setActiveLibraryCategory('search' as any); // Always treat as search results
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handlePixabaySearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        performPixabaySearch(pixabayQuery);
     };
 
     return (
@@ -175,17 +229,81 @@ export default function ConfiguratorClient() {
                     {activeTool === 'library' && (
                         <>
                             <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
+
+                            {/* Pixabay Search Bar */}
+                            <form onSubmit={handlePixabaySearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                <input
+                                    type="text"
+                                    value={pixabayQuery}
+                                    onChange={(e) => setPixabayQuery(e.target.value)}
+                                    placeholder="Caută în Pixabay..."
+                                    style={{
+                                        flex: 1,
+                                        padding: '0.6rem',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border)',
+                                        background: 'white',
+                                        fontSize: '0.875rem'
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isSearching}
+                                    style={{
+                                        padding: '0.6rem 1rem',
+                                        borderRadius: '8px',
+                                        background: 'var(--primary)',
+                                        color: 'white',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {isSearching ? '...' : 'Caută'}
+                                </button>
+                            </form>
+
+                            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.875rem',
+                                    cursor: 'pointer',
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border)',
+                                    background: pixabayTransparent ? 'var(--accent)' : 'white',
+                                    color: pixabayTransparent ? 'var(--primary)' : 'var(--foreground)',
+                                    fontWeight: pixabayTransparent ? 700 : 400,
+                                    transition: 'all 0.2s'
+                                }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={pixabayTransparent}
+                                        onChange={(e) => setPixabayTransparent(e.target.checked)}
+                                        style={{ accentColor: 'var(--primary)' }}
+                                    />
+                                    <span>Fără fundal (PNG)</span>
+                                </label>
+                            </div>
+
                             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
                                 {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
                                     <button
                                         key={cat}
-                                        onClick={() => setActiveLibraryCategory(cat as LibraryCategory)}
+                                        onClick={() => {
+                                            const query = cat.charAt(0).toUpperCase() + cat.slice(1);
+                                            setPixabayQuery(query);
+                                            performPixabaySearch(query);
+                                        }}
                                         style={{
                                             padding: '0.4rem 0.8rem',
                                             borderRadius: '99px',
                                             border: '1px solid var(--border)',
-                                            background: activeLibraryCategory === cat ? 'var(--primary)' : 'white',
-                                            color: activeLibraryCategory === cat ? 'white' : 'var(--foreground)',
+                                            background: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
+                                            color: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
                                             fontSize: '0.8rem',
                                             cursor: 'pointer',
                                             whiteSpace: 'nowrap'
@@ -194,27 +312,51 @@ export default function ConfiguratorClient() {
                                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
                                     </button>
                                 ))}
+                                {pixabayResults.length > 0 && (
+                                    <button
+                                        onClick={() => setActiveLibraryCategory('search' as any)}
+                                        style={{
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: '99px',
+                                            border: '1px solid var(--border)',
+                                            background: activeLibraryCategory === ('search' as any) ? 'var(--primary)' : 'white',
+                                            color: activeLibraryCategory === ('search' as any) ? 'white' : 'var(--foreground)',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Rezultate Căutare
+                                    </button>
+                                )}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto' }}>
-                                {LIBRARY_ASSETS.filter(item => item.category === activeLibraryCategory).map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => addElement('image', item.url)}
-                                        style={{
-                                            border: '1px solid var(--border)',
-                                            borderRadius: '0.5rem',
-                                            overflow: 'hidden',
-                                            background: 'white',
-                                            cursor: 'pointer',
-                                            height: '100px',
-                                            position: 'relative'
-                                        }}
-                                        className="hover:shadow-md transition-shadow"
-                                    >
-                                        <img src={item.url} alt={item.category} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </button>
-                                ))}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
+                                {pixabayResults.length > 0 ? (
+                                    pixabayResults.map(hit => (
+                                        <button
+                                            key={hit.id}
+                                            onClick={() => addElement('image', hit.url)}
+                                            style={{
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '0.5rem',
+                                                overflow: 'hidden',
+                                                background: 'white',
+                                                cursor: 'pointer',
+                                                height: '100px',
+                                                position: 'relative'
+                                            }}
+                                            className="hover:shadow-md transition-shadow"
+                                        >
+                                            <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                        {pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie."}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
@@ -246,9 +388,23 @@ export default function ConfiguratorClient() {
                                     </div>
                                 </div>
 
+                                {/* Text Scale / Zoom */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărește / Micșorează Text: {Math.round((el.scale || 1) * 100)}%</label>
+                                    <input
+                                        type="range"
+                                        min="0.5"
+                                        max="4"
+                                        step="0.1"
+                                        value={el.scale || 1}
+                                        onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
+                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                    />
+                                </div>
+
                                 {/* Font Size */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime: {el.fontSize}px</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font Excată: {el.fontSize}px</label>
                                     <input
                                         type="range"
                                         min="12"
@@ -287,17 +443,60 @@ export default function ConfiguratorClient() {
                 </div>
             )}
 
+            {/* Image Edit Panel */}
+            {activeTool === 'edit-image' && selectedId && elements.find(e => e.id === selectedId)?.type === 'image' && (
+                <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Imagine</h3>
+
+                    {(() => {
+                        const el = elements.find(e => e.id === selectedId)!;
+                        return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                {/* Mărime (Scale) */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
+                                    <input
+                                        type="range"
+                                        min="0.1"
+                                        max="3"
+                                        step="0.05"
+                                        value={el.scale || 1}
+                                        onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
+                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                    />
+                                </div>
+
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                                    Sfat: Poți trage imaginea oriunde în spațiul de lucru.
+                                </div>
+
+                                <button
+                                    className="btn btn-outline"
+                                    onClick={() => setSelectedId(null)}
+                                    style={{ marginTop: '1rem', fontSize: '0.8rem' }}
+                                >
+                                    Închide Editarea
+                                </button>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
+
             {/* Main Canvas Area */}
             <main style={{ flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                <div style={{
-                    width: '600px',
-                    height: '400px',
-                    background: background,
-                    transition: 'background 0.3s ease',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
+                <div
+                    ref={canvasRef}
+                    style={{
+                        width: orientation === 'landscape' ? '600px' : '400px',
+                        height: orientation === 'landscape' ? '400px' : '600px',
+                        background: background,
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}
+                >
                     {elements.length === 0 && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
                             <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
@@ -311,16 +510,56 @@ export default function ConfiguratorClient() {
                             key={el.id}
                             drag
                             dragMomentum={false}
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: el.scale || 1, opacity: 1 }}
+                            onDragEnd={(e, info) => handleDragEnd(el.id, info)}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedId(el.id);
                                 if (el.type === 'text') setActiveTool('edit-text');
+                                if (el.type === 'image') setActiveTool('edit-image');
                             }}
-                            style={{ position: 'absolute', top: '50%', left: '50%', cursor: 'move', zIndex: selectedId === el.id ? 10 : 1 }}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                left: '20px',
+                                zIndex: selectedId === el.id ? 10 : 1,
+                                touchAction: 'none'
+                            }}
                         >
-                            <div className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`} style={{ position: 'relative' }}>
+                            <div
+                                className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`}
+                                style={{
+                                    position: 'relative',
+                                    border: selectedId === el.id ? '2px solid var(--primary)' : '2px solid transparent',
+                                    padding: '4px',
+                                    borderRadius: '4px',
+                                    transition: 'border-color 0.2s'
+                                }}
+                            >
+                                {/* Drag Handle - Only visible when selected */}
+                                {selectedId === el.id && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-30px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        background: 'var(--primary)',
+                                        color: 'white',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        cursor: 'grabbing',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                        zIndex: 11
+                                    }}>
+                                        <GripHorizontal size={14} /> TRAGE
+                                    </div>
+                                )}
                                 {el.type === 'text' ? (
                                     <div
                                         contentEditable
@@ -343,7 +582,12 @@ export default function ConfiguratorClient() {
                                         {el.content}
                                     </div>
                                 ) : (
-                                    <img src={el.content} alt="uploaded" style={{ maxWidth: '200px', display: 'block' }} />
+                                    <img
+                                        src={el.content}
+                                        alt="uploaded"
+                                        draggable="false"
+                                        style={{ maxWidth: '300px', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
+                                    />
                                 )}
 
                                 <button
@@ -400,6 +644,36 @@ export default function ConfiguratorClient() {
                                 </span>
                             </label>
                         ))}
+                    </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Orientare</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            onClick={() => setOrientation('landscape')}
+                            style={{
+                                flex: 1, padding: '0.75rem', borderRadius: 'var(--radius)',
+                                border: orientation === 'landscape' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                background: orientation === 'landscape' ? 'var(--accent)' : 'white',
+                                fontWeight: orientation === 'landscape' ? 700 : 400,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Landscape
+                        </button>
+                        <button
+                            onClick={() => setOrientation('portrait')}
+                            style={{
+                                flex: 1, padding: '0.75rem', borderRadius: 'var(--radius)',
+                                border: orientation === 'portrait' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                background: orientation === 'portrait' ? 'var(--accent)' : 'white',
+                                fontWeight: orientation === 'portrait' ? 700 : 400,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Portrait
+                        </button>
                     </div>
                 </div>
 
