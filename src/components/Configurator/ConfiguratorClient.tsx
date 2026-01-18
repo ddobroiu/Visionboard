@@ -4,9 +4,9 @@ import { useSession } from "next-auth/react";
 
 import { useState, useRef, useEffect } from 'react';
 import {
-    Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X,
-    GripHorizontal, LayoutGrid, Sparkles, Copy, ArrowUp, ArrowDown,
-    Box, Eye, Minus, Plus, Square, Circle, Heart, Hexagon, Star, LayoutTemplate, RotateCcw
+    Upload, Type, Image as ImageIcon, ShoppingCart, X,
+    GripHorizontal, LayoutGrid, Sparkles,
+    Box, Eye, Square, Circle, Heart, Hexagon, Star, LayoutTemplate, RotateCcw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Script from 'next/script';
@@ -15,6 +15,13 @@ import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
 import { VISION_TEMPLATES, VisionTemplate } from '@/lib/templates';
 import { Toolbar } from './Toolbar';
 import { PropertiesPanel } from './PropertiesPanel';
+import { LibraryPanel } from './LibraryPanel';
+import { ProductSidebar } from './ProductSidebar';
+import { CanvasElement } from './CanvasElement';
+import { ZoomControls } from './ZoomControls';
+import { ContextMenu } from './ContextMenu';
+import { Workspace } from './Workspace';
+import { MobileNav } from './MobileNav';
 import { ConfigElement, FONTS } from './Configurator.types';
 
 
@@ -70,7 +77,6 @@ export default function ConfiguratorClient() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const bgFileInputRef = useRef<HTMLInputElement>(null);
-    const canvasRef = useRef<HTMLDivElement>(null);
     const modelViewerRef = useRef<any>(null);
     const workspaceContainerRef = useRef<HTMLDivElement>(null);// Calcul preț simplist pt demo
     const calculatePrice = () => {
@@ -620,452 +626,41 @@ export default function ConfiguratorClient() {
                 isMobile={isMobile}
             />
 
-            <div style={toolPanelStyle}>{activeTool === 'upload' && (
-                <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Încărcare Imagini</h3>
-                    <button className="tool-btn active" style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem', justifyContent: 'center', gap: '8px', padding: '0.75rem' }} onClick={handleUploadClick}>
-                        <Upload size={20} />
-                        <span>Încarcă Imagine Nouă</span>
-                    </button>
-
-                    <div style={{ paddingBottom: '1rem', fontWeight: 600, fontSize: '0.9rem' }}>Imaginile tale ({uploadedImages.length})</div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
-                        {uploadedImages.length > 0 ? (
-                            uploadedImages.map((url, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => addElement('image', url)}
-                                    style={{
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '0.5rem',
-                                        overflow: 'hidden',
-                                        background: 'white',
-                                        cursor: 'pointer',
-                                        height: '100px',
-                                        position: 'relative'
-                                    }}
-                                    className="hover:shadow-md transition-shadow"
-                                >
-                                    <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                </button>
-                            ))
-                        ) : (
-                            <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                Nu ai încărcat nicio poză încă.
-                            </div>
-                        )}
-                    </div>
-                </>
-            )}
-                {activeTool === 'templates' && (
-                    <>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
-                            {VISION_TEMPLATES.map(t => (
-                                <button
-                                    key={t.id}
-                                    onClick={() => loadTemplate(t)}
-                                    style={{
-                                        border: '1px solid var(--border)', background: 'white', padding: '0.5rem', cursor: 'pointer', borderRadius: '12px',
-                                        overflow: 'hidden', textAlign: 'left', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '8px'
-                                    }}
-                                    className="hover:border-primary hover:shadow-md"
-                                >
-                                    <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden' }}>
-                                        <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>{t.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.description}</div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </>
-                )}
-
-                {activeTool === 'elements' && (
-                    <>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Elemente & Forme</h3>
-
-                        {/* Vector Search Bar */}
-                        <form onSubmit={handleVectorSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            <input
-                                type="text"
-                                value={vectorQuery}
-                                onChange={(e) => setVectorQuery(e.target.value)}
-                                placeholder="Caută elemente (ex: flori, linii)..."
-                                style={{
-                                    flex: 1,
-                                    padding: '0.6rem',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border)',
-                                    background: 'white',
-                                    fontSize: '0.875rem'
-                                }}
-                            />
-                            <button
-                                type="submit"
-                                disabled={isSearchingVectors}
-                                style={{
-                                    padding: '0.6rem 1rem',
-                                    borderRadius: '8px',
-                                    background: 'var(--primary)',
-                                    color: 'white',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600
-                                }}
-                            >
-                                {isSearchingVectors ? '...' : 'Caută'}
-                            </button>
-                        </form>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-                            {['forme', 'linii', 'flori', 'abstract', 'nature'].map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => {
-                                        const query = cat.charAt(0).toUpperCase() + cat.slice(1);
-                                        setVectorQuery(query);
-                                        setVectorPage(1);
-                                        performPixabaySearch(query, false, 1, 'vector');
-                                    }}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        borderRadius: '99px',
-                                        border: '1px solid var(--border)',
-                                        background: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
-                                        color: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
-                                        fontSize: '0.8rem',
-                                        cursor: 'pointer',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', overflowY: 'auto', flex: 1, paddingBottom: '1rem' }} className="hide-scrollbar">
-                            {/* Search Results (Vectors from Pixabay) */}
-                            {vectorResults.map(hit => (
-                                <button
-                                    key={hit.id}
-                                    onClick={() => addElement('image', hit.url)}
-                                    style={{
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '0.5rem',
-                                        overflow: 'hidden',
-                                        background: 'white',
-                                        cursor: 'pointer',
-                                        height: '80px',
-                                        position: 'relative'
-                                    }}
-                                    className="hover:shadow-md transition-shadow"
-                                >
-                                    <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
-                                </button>
-                            ))}
-
-                            {vectorResults.length > 0 && (
-                                <button
-                                    onClick={handleLoadMoreVectors}
-                                    disabled={isSearchingVectors}
-                                    style={{
-                                        gridColumn: 'span 3',
-                                        padding: '0.75rem',
-                                        marginTop: '0.5rem',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border)',
-                                        background: 'white',
-                                        color: 'var(--primary)',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        fontSize: '0.875rem',
-                                        marginBottom: '1rem'
-                                    }}
-                                >
-                                    {isSearchingVectors ? 'Se încarcă...' : 'Încarcă mai multe elemente'}
-                                </button>
-                            )}
-
-                            {vectorError && (
-                                <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '1rem', color: 'var(--secondary-foreground)', opacity: 0.6, fontSize: '0.8rem' }}>
-                                    {vectorError}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-                {activeTool === 'bg' && (
-                    <>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
-
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Imagine de Fundal</label>
-                            <button
-                                onClick={handleBgUploadClick}
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    borderRadius: '8px',
-                                    border: '2px dashed var(--border)',
-                                    background: 'white',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.5rem',
-                                    fontSize: '0.875rem',
-                                    color: 'var(--primary)',
-                                    fontWeight: 600
-                                }}
-                                className="hover:border-primary transition-colors"
-                            >
-                                <Upload size={18} /> Încarcă Poză de Fundal
-                            </button>
-                            {!background.startsWith('#') && (
-                                <button
-                                    onClick={() => setBackground('#ffffff')}
-                                    style={{
-                                        width: '100%',
-                                        marginTop: '0.75rem',
-                                        padding: '0.6rem',
-                                        fontSize: '0.8rem',
-                                        color: 'white',
-                                        background: '#ef4444',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontWeight: 600,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.5rem'
-                                    }}
-                                    className="hover:bg-red-600 transition-colors"
-                                >
-                                    <X size={14} /> Elimină Imaginea de Fundal
-                                </button>
-                            )}
-                        </div>
-
-                        <div style={{ marginBottom: '0.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Sau alege o culoare</label>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            <input
-                                type="color"
-                                value={background.startsWith('#') ? background : '#ffffff'}
-                                onChange={(e) => setBackground(e.target.value)}
-                                style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
-                            />
-                            <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
-                                {background.startsWith('#') ? background.toUpperCase() : 'IMAGINE'}
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                            {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
-                                <button
-                                    key={color}
-                                    onClick={() => setBackground(color)}
-                                    style={{
-                                        width: '32px', height: '32px', borderRadius: '50%',
-                                        background: color, border: '1px solid var(--border)',
-                                        cursor: 'pointer',
-                                        boxShadow: background === color ? '0 0 0 2px var(--primary)' : 'none'
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    </>
-                )}
-
-                {activeTool === 'library' && (
-                    <>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
-
-                        {/* Pixabay Search Bar */}
-                        <form onSubmit={handlePixabaySearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            <input
-                                type="text"
-                                value={pixabayQuery}
-                                onChange={(e) => setPixabayQuery(e.target.value)}
-                                placeholder="Caută în Pixabay..."
-                                style={{
-                                    flex: 1,
-                                    padding: '0.6rem',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border)',
-                                    background: 'white',
-                                    fontSize: '0.875rem'
-                                }}
-                            />
-                            <button
-                                type="submit"
-                                disabled={isSearching}
-                                style={{
-                                    padding: '0.6rem 1rem',
-                                    borderRadius: '8px',
-                                    background: 'var(--primary)',
-                                    color: 'white',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600
-                                }}
-                            >
-                                {isSearching ? '...' : 'Caută'}
-                            </button>
-                        </form>
-
-                        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <label style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                fontSize: '0.875rem',
-                                cursor: 'pointer',
-                                padding: '0.4rem 0.8rem',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border)',
-                                background: pixabayTransparent ? 'var(--accent)' : 'white',
-                                color: pixabayTransparent ? 'var(--primary)' : 'var(--foreground)',
-                                fontWeight: pixabayTransparent ? 700 : 400,
-                                transition: 'all 0.2s'
-                            }}>
-                                <input
-                                    type="checkbox"
-                                    checked={pixabayTransparent}
-                                    onChange={(e) => setPixabayTransparent(e.target.checked)}
-                                    style={{ accentColor: 'var(--primary)' }}
-                                />
-                                <span>Fără fundal (PNG)</span>
-                            </label>
-
-                            <select
-                                value={pixabayOrientation}
-                                onChange={(e) => setPixabayOrientation(e.target.value)}
-                                style={{
-                                    padding: '0.4rem 0.6rem',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '0.8rem',
-                                    background: 'white',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option value="all">Toate</option>
-                                <option value="horizontal">Landscape</option>
-                                <option value="vertical">Portrait</option>
-                            </select>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-
-                            {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => {
-                                        const query = cat.charAt(0).toUpperCase() + cat.slice(1);
-                                        setPixabayQuery(query);
-                                        setPixabayPage(1);
-                                        performPixabaySearch(query, false, 1);
-                                    }}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        borderRadius: '99px',
-                                        border: '1px solid var(--border)',
-                                        background: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
-                                        color: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
-                                        fontSize: '0.8rem',
-                                        cursor: 'pointer',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                </button>
-                            ))}
-                            {pixabayResults.length > 0 && (
-                                <button
-                                    onClick={() => setActiveLibraryCategory('search' as any)}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        borderRadius: '99px',
-                                        border: '1px solid var(--border)',
-                                        background: activeLibraryCategory === ('search' as any) ? 'var(--primary)' : 'white',
-                                        color: activeLibraryCategory === ('search' as any) ? 'white' : 'var(--foreground)',
-                                        fontSize: '0.8rem',
-                                        cursor: 'pointer',
-                                        whiteSpace: 'nowrap',
-                                        fontWeight: 'bold'
-                                    }}
-                                >
-                                    Rezultate Căutare
-                                </button>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
-                            {pixabayResults.length > 0 ? (
-                                <>
-                                    {pixabayResults.map(hit => (
-                                        <button
-                                            key={hit.id}
-                                            onClick={() => addElement('image', hit.url)}
-                                            style={{
-                                                border: '1px solid var(--border)',
-                                                borderRadius: '0.5rem',
-                                                overflow: 'hidden',
-                                                background: 'white',
-                                                cursor: 'pointer',
-                                                height: '100px',
-                                                position: 'relative'
-                                            }}
-                                            className="hover:shadow-md transition-shadow"
-                                        >
-                                            <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={handleLoadMore}
-                                        disabled={isSearching}
-                                        style={{
-                                            gridColumn: 'span 2',
-                                            padding: '0.75rem',
-                                            marginTop: '0.5rem',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--border)',
-                                            background: 'white',
-                                            color: 'var(--primary)',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            fontSize: '0.875rem',
-                                            marginBottom: '1rem'
-                                        }}
-                                    >
-                                        {isSearching ? 'Se încarcă...' : 'Încarcă mai multe rezultate'}
-                                    </button>
-                                </>
-                            ) : (
-                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                    {pixabayError || (pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie.")}
-                                </div>
-                            )}
-
-                            {pixabayError && pixabayResults.length > 0 && (
-                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-                                    {pixabayError}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
+            <div style={toolPanelStyle}>
+                <LibraryPanel
+                    activeTool={activeTool}
+                    uploadedImages={uploadedImages}
+                    addElement={addElement}
+                    handleUploadClick={handleUploadClick}
+                    VISION_TEMPLATES={VISION_TEMPLATES}
+                    loadTemplate={loadTemplate}
+                    vectorQuery={vectorQuery}
+                    setVectorQuery={setVectorQuery}
+                    handleVectorSearch={handleVectorSearch}
+                    isSearchingVectors={isSearchingVectors}
+                    vectorResults={vectorResults}
+                    handleLoadMoreVectors={handleLoadMoreVectors}
+                    vectorError={vectorError}
+                    handleBgUploadClick={handleBgUploadClick}
+                    background={background}
+                    setBackground={setBackground}
+                    pixabayQuery={pixabayQuery}
+                    setPixabayQuery={setPixabayQuery}
+                    handlePixabaySearch={handlePixabaySearch}
+                    isSearching={isSearching}
+                    pixabayTransparent={pixabayTransparent}
+                    setPixabayTransparent={setPixabayTransparent}
+                    pixabayOrientation={pixabayOrientation}
+                    setPixabayOrientation={setPixabayOrientation}
+                    pixabayResults={pixabayResults}
+                    handleLoadMore={handleLoadMore}
+                    pixabayError={pixabayError}
+                    activeLibraryCategory={activeLibraryCategory}
+                    setActiveLibraryCategory={setActiveLibraryCategory}
+                    performPixabaySearch={performPixabaySearch}
+                    setVectorPage={setVectorPage}
+                    setPixabayPage={setPixabayPage}
+                />
             </div>
             {/* Properties Panel (Text & Image Editing) */}
             <PropertiesPanel
@@ -1080,527 +675,69 @@ export default function ConfiguratorClient() {
             {/* Image Edit Panel (shared for uploaded and vectors) */}
 
             {/* Main Canvas Area */}
-            <main
-                ref={workspaceContainerRef}
-                onClick={() => { setSelectedId(null); setActiveTool(null); }}
-                style={{
-                    flex: 1,
-                    background: '#f1f5f9',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'auto',
-                    padding: isMobile ? '1rem' : '100px',
-                    paddingLeft: isMobile ? 0 : '400px',
-                }}
-            >
-                {/* Zoom Controls */}
-                <div style={{
-                    position: 'absolute', bottom: isMobile ? '80px' : '2rem', left: '50%', transform: 'translateX(-50%)',
-                    background: 'white', padding: '0.5rem', borderRadius: '12px',
-                    display: 'flex', alignItems: 'center', gap: '1rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                    zIndex: 200, border: '1px solid var(--border)'
-                }}>
-                    <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} style={{ padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', border: '1px solid #e2e8f0' }}><Minus size={16} /></button>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, minWidth: '3.5rem', textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(prev => Math.min(3, prev + 0.1))} style={{ padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', border: '1px solid #e2e8f0' }}><Plus size={16} /></button>
-                    <div style={{ width: '1px', height: '24px', background: '#e2e8f0' }} />
-                    <button onClick={() => setZoom(1)} style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'var(--accent)', border: 'none', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)' }}>RESET</button>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>Scroll</div>
-                </div>
-
-                <div
-                    ref={canvasRef}
-                    style={{
-                        width: orientation === 'landscape' ? '600px' : '400px',
-                        height: orientation === 'landscape' ? '400px' : '600px',
-                        transform: `scale(${zoom})`,
-                        transformOrigin: 'center center',
-                        background: viewMode === 'workspace'
-                            ? (background.startsWith('data:') || background.startsWith('http') ? `url(${background})` : background)
-                            : 'white',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        transition: 'all 0.3s ease',
-                        boxShadow: viewMode === 'workspace' ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' : 'none',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '8px'
-                    }}
-                >
-                    {elements.length === 0 && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
-                            <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <div>Spațiu de Lucru</div>
-                            <div style={{ fontSize: '0.875rem' }}>Folosește meniul din stnga</div>
-                        </div>
-                    )}
-
-                    {viewMode === 'workspace' ? (
-                        elements.map((el, index) => (
-                            <motion.div
-                                key={el.id}
-                                drag
-                                dragMomentum={false}
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: el.scale || 1, opacity: 1 }}
-                                onDragEnd={(e, info) => handleDragEnd(el.id, info)}
-                                onContextMenu={(e) => handleContextMenu(e, el.id)}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedId(el.id);
-                                    if (el.type === 'text') setActiveTool('edit-text');
-                                    if (el.type === 'image') setActiveTool('edit-image');
-                                }}
-                                style={{
-                                    position: 'absolute',
-                                    top: '20px',
-                                    left: '20px',
-                                    x: el.x,
-                                    y: el.y,
-                                    zIndex: selectedId === el.id ? 1000 : index,
-                                    touchAction: 'none',
-                                    rotate: el.rotation || 0,
-                                    transformOrigin: 'center center',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                <div
-                                    className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`}
-                                    style={{
-                                        position: 'relative',
-                                        border: selectedId === el.id ? '2px solid var(--primary)' : '2px solid transparent',
-                                        padding: '4px',
-                                        borderRadius: '4px',
-                                        transition: 'border-color 0.2s',
-                                        cursor: 'move'
-                                    }}
-                                >
-                                    {selectedId === el.id && (
-                                        <>
-                                            {/* Corner Resize Handles */}
-                                            {['nw', 'ne', 'sw', 'se'].map((corner) => (
-                                                <motion.div
-                                                    key={corner}
-                                                    drag
-                                                    dragMomentum={false}
-                                                    onDrag={(e, info) => {
-                                                        const delta = (corner.includes('e') ? info.delta.x : -info.delta.x) / 100;
-                                                        updateElementStyle(el.id, 'scale', Math.max(0.1, (el.scale || 1) + delta));
-                                                    }}
-                                                    onPointerDown={(e) => e.stopPropagation()}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: corner.includes('n') ? -8 : 'auto',
-                                                        bottom: corner.includes('s') ? -8 : 'auto',
-                                                        left: corner.includes('w') ? -8 : 'auto',
-                                                        right: corner.includes('e') ? -8 : 'auto',
-                                                        width: 16, height: 16, background: 'white',
-                                                        border: '2px solid var(--primary)', borderRadius: '50%',
-                                                        cursor: corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize',
-                                                        zIndex: 110, boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                                    }}
-                                                />
-                                            ))}
-
-                                            {/* Global Delete Button */}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
-                                                onPointerDown={(e) => e.stopPropagation()}
-                                                style={{
-                                                    position: 'absolute', top: isMobile ? -25 : -20, right: isMobile ? -25 : -20, width: isMobile ? 32 : 24, height: isMobile ? 32 : 24,
-                                                    borderRadius: '50%', background: '#ef4444', color: 'white',
-                                                    border: '2px solid white', display: 'flex', alignItems: 'center',
-                                                    justifyContent: 'center', cursor: 'pointer', zIndex: 110,
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                                                }}
-                                                className="hover:bg-red-600 transition-colors"
-                                                title="ț˜terge element"
-                                            >
-                                                <X size={14} strokeWidth={3} />
-                                            </button>
-                                        </>
-                                    )}
-                                    {el.type === 'text' ? (
-                                        <div
-                                            contentEditable
-                                            suppressContentEditableWarning
-                                            onBlur={(e) => handleTextChange(el.id, e.currentTarget.textContent || '')}
-                                            style={{
-                                                fontSize: `${el.fontSize || 24}px`,
-                                                color: el.color || '#000000',
-                                                fontFamily: el.fontFamily || 'inherit',
-                                                fontWeight: 'bold', padding: '0.5rem',
-                                                border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
-                                                minWidth: '50px', textAlign: 'center', whiteSpace: 'nowrap', lineHeight: 1.2,
-                                                pointerEvents: selectedId === el.id ? 'auto' : 'none',
-                                                cursor: selectedId === el.id ? 'text' : 'move'
-                                            }}
-                                            className={`editable-text effect-${el.effect || 'none'}`}
-                                        >
-                                            {el.content}
-                                        </div>
-                                    ) : (
-                                        el.color ? (
-                                            <div style={{
-                                                width: '200px', height: '200px', backgroundColor: el.color,
-                                                WebkitMaskImage: `url(${el.content})`, maskImage: `url(${el.content})`,
-                                                WebkitMaskSize: 'contain', maskSize: 'contain',
-                                                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-                                                WebkitMaskPosition: 'center', maskPosition: 'center',
-                                                clipPath: (el.maskShape === 'circle') ? 'circle(50%)' :
-                                                    (el.maskShape === 'heart') ? 'path("M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")' :
-                                                        (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
-                                                            (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
-                                            }} />
-                                        ) : (
-                                            <img
-                                                src={el.content}
-                                                alt="uploaded"
-                                                draggable="false"
-                                                style={{
-                                                    width: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
-                                                    height: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
-                                                    maxWidth: '300px',
-                                                    display: 'block',
-                                                    pointerEvents: 'none',
-                                                    userSelect: 'none',
-                                                    objectFit: 'cover',
-                                                    clipPath: (el.maskShape === 'circle') ? 'circle(50% at 50% 50%)' :
-                                                        (el.maskShape === 'heart') ? 'path("M100 171.6L20.8 88.3C4.2 71.1 0 49.3 0 29.5 0 9.7 13.1 0 29.1 0 45.1 0 54.5 11.8 62.5 24.1 70.3 36.4 74.3 43.1 82.5 43.1S94.7 36.4 102.5 24.1C110.5 11.8 119.9 0 135.9 0 151.8 0 165 9.7 165 29.5 165 49.3 160.8 71.1 144.2 88.3L65 171.6")' :
-                                                            (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
-                                                                (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
-                                                }}
-                                            />
-                                        )
-                                    )}
-                                </div>
-                            </motion.div>
-                        ))
-                    ) : (
-                        <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, background: '#f8fafc', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
-                            {/* @ts-ignore */}
-                            <model-viewer
-                                key={`3d-${orientation}-${size}`}
-                                ref={modelViewerRef}
-                                src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}
-                                alt="3D Preview"
-                                shadow-intensity="1"
-                                camera-controls
-                                auto-rotate
-                                tone-mapping="neutral"
-                                style={{ width: '100%', height: '100%', background: '#f8fafc' }}
-                            />
-                            {/* Manual Refresh Button if it doesn't load automatically */}
-                            <button
-                                onClick={update3DTexture}
-                                style={{
-                                    position: 'absolute', bottom: 20, right: 20,
-                                    background: 'rgba(255,255,255,0.8)', border: '1px solid #cbd5e1',
-                                    padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
-                                    fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
-                                }}
-                            >
-                                <Sparkles size={14} /> Reîmprospătează 3D
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </main>
+            <Workspace
+                orientation={orientation}
+                elements={elements}
+                background={background}
+                viewMode={viewMode}
+                zoom={zoom}
+                setZoom={setZoom}
+                selectedId={selectedId}
+                setSelectedId={setSelectedId}
+                setActiveTool={setActiveTool}
+                handleDragEnd={handleDragEnd}
+                handleContextMenu={handleContextMenu}
+                updateElementStyle={updateElementStyle}
+                deleteElement={deleteElement}
+                handleTextChange={handleTextChange}
+                isMobile={isMobile}
+                modelViewerRef={modelViewerRef}
+                size={size}
+                update3DTexture={update3DTexture}
+                workspaceContainerRef={workspaceContainerRef}
+            />
 
 
             {/* Product Options */}
-            {
-                isMobile && (
-                    <>
-                        {/* Floating 3D Toggle */}
-                        <button
-                            onClick={() => setViewMode(viewMode === 'workspace' ? '3d' : 'workspace')}
-                            style={{
-                                position: 'absolute', top: '1rem', right: '1rem',
-                                background: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
-                                zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
-                            }}
-                        >
-                            <Box size={16} /> {viewMode === 'workspace' ? 'Vezi 3D' : 'Vezi 2D'}
-                        </button>
-
-                        {/* Floating Settings/Order Button (bottom right above zoom) */}
-                        <button
-                            onClick={() => setShowMobileSettings(true)}
-                            style={{
-                                position: 'absolute', top: '1rem', right: '110px',
-                                background: 'var(--primary)', color: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none',
-                                zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
-                            }}
-                        >
-                            <ShoppingCart size={16} /> Comandă
-                        </button>
-
-                        {/* Overlay for Settings */}
-                        {showMobileSettings && (
-                            <div
-                                onClick={() => setShowMobileSettings(false)}
-                                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
-                            />
-                        )}
-                    </>
-                )
-            }
-            <aside style={{
-                width: isMobile ? '100%' : '350px',
-                height: isMobile ? 'auto' : '100%',
-                overflowY: 'auto',
-                borderLeft: isMobile ? 'none' : '1px solid var(--border)',
-                padding: '1.5rem',
-                background: 'var(--surface)',
-                display: 'flex',
-                flexDirection: 'column',
-                zIndex: isMobile ? 1002 : 10,
-                position: isMobile ? 'fixed' : 'relative',
-                bottom: 0,
-                right: 0,
-                transform: isMobile && !showMobileSettings ? 'translateY(100%)' : 'none',
-                transition: 'transform 0.3s ease-out',
-                borderTopLeftRadius: isMobile ? '1rem' : 0,
-                borderTopRightRadius: isMobile ? '1rem' : 0,
-                boxShadow: isMobile ? '0 -10px 25px -5px rgba(0, 0, 0, 0.1)' : 'none'
-            }}>
-
-                {isMobile && (
-                    <button onClick={() => setShowMobileSettings(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none' }}><X /></button>
-                )}
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Material</label>
-                    <select
-                        value={material}
-                        onChange={(e) => setMaterial(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
-                    >
-                        <option value="canvas">Tablou Canvas</option>
-                        <option value="forex">Placă Forex (PVC)</option>
-                        <option value="acrylic">Sticlă Acrilică</option>
-                    </select>
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Orientare</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                            onClick={() => setOrientation('landscape')}
-                            style={{
-                                flex: 1, padding: '0.75rem', borderRadius: 'var(--radius)',
-                                border: orientation === 'landscape' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                background: orientation === 'landscape' ? 'var(--accent)' : 'white',
-                                fontWeight: orientation === 'landscape' ? 700 : 400,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Landscape
-                        </button>
-                        <button
-                            onClick={() => setOrientation('portrait')}
-                            style={{
-                                flex: 1, padding: '0.75rem', borderRadius: 'var(--radius)',
-                                border: orientation === 'portrait' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                background: orientation === 'portrait' ? 'var(--accent)' : 'white',
-                                fontWeight: orientation === 'portrait' ? 700 : 400,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Portrait
-                        </button>
-                    </div>
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Dimensiune (cm)</label>
-                    <select
-                        value={size}
-                        onChange={(e) => setSize(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
-                    >
-                        <option value="20x30">20x30 cm</option>
-                        <option value="30x40">30x40 cm</option>
-                        <option value="40x60">40x60 cm</option>
-                        <option value="50x70">50x70 cm</option>
-                        <option value="70x100">70x100 cm</option>
-                    </select>
-                </div>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Previzualizare</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {/* 3D Preview Box */}
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setViewMode('3d'); }}
-                            style={{
-                                width: '100%',
-                                height: '140px',
-                                padding: 0,
-                                background: '#f1f5f9',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                                border: viewMode === '3d' ? '3px solid var(--primary)' : '2px solid #e2e8f0',
-                                position: 'relative',
-                                transition: 'all 0.2s',
-                                boxShadow: viewMode === '3d' ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none'
-                            }}
-                        >
-                            {/* @ts-ignore */}
-                            <model-viewer
-                                key={`sidebar-3d-${orientation}`}
-                                src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}
-                                alt="3D Visionboard"
-                                shadow-intensity="1"
-                                auto-rotate
-                                tone-mapping="neutral"
-                                style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-                            />
-                            <div style={{
-                                position: 'absolute', bottom: 8, right: 8,
-                                background: 'white', padding: '4px 8px', borderRadius: '4px',
-                                fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                color: 'var(--foreground)'
-                            }}>
-                                <Box size={12} /> VIZUALIZARE 3D
-                            </div>
-                        </button>
-
-                        {/* 2D Mini Preview */}
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setViewMode('workspace'); }}
-                            style={{
-                                width: '100%',
-                                height: '80px',
-                                padding: 0,
-                                background: background.startsWith('#') ? background : '#ffffff',
-                                backgroundImage: !background.startsWith('#') ? `url(${background})` : 'none',
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                cursor: 'pointer',
-                                border: viewMode === 'workspace' ? '3px solid var(--primary)' : '2px solid #e2e8f0',
-                                position: 'relative',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s',
-                                boxShadow: viewMode === 'workspace' ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none'
-                            }}
-                        >
-                            <div style={{ transform: 'scale(0.15)', pointerEvents: 'none', position: 'relative', width: orientation === 'landscape' ? '600px' : '400px', height: orientation === 'landscape' ? '400px' : '600px' }}>
-                                {elements.map(el => (
-                                    <div key={el.id} style={{
-                                        position: 'absolute',
-                                        left: (el.x + 20),
-                                        top: (el.y + 20),
-                                        width: '100px',
-                                        height: '20px',
-                                        background: el.color || '#cbd5e1',
-                                        opacity: 0.6,
-                                        borderRadius: '4px'
-                                    }} />
-                                ))}
-                            </div>
-                            <div style={{
-                                position: 'absolute', bottom: 8, right: 8,
-                                background: 'white', padding: '4px 8px', borderRadius: '4px',
-                                fontSize: '10px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                color: 'var(--foreground)'
-                            }}>
-                                <Eye size={12} /> EDITOR (2D)
-                            </div>
-                        </button>
-                    </div>
-                </div>
-                <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        <span>Preț:</span>
-                        <span>{price} Lei</span>
-                    </div>
-                    <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={handleAddToCart}>
-                        <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
-                        Adaugă în Coș
-                    </button>
-                    {isAdmin && (
-                        <button
-                            className="btn btn-outline"
-                            style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }}
-                            onClick={handleSaveTemplate}
-                        >
-                            <Settings size={20} style={{ marginRight: '0.5rem' }} />
-                            Salvează Template
-                        </button>
-                    )}
-                </div>
-            </aside>
+            <MobileNav
+                isMobile={isMobile}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                setShowMobileSettings={setShowMobileSettings}
+                showMobileSettings={showMobileSettings}
+            />
+            <ProductSidebar
+                isMobile={isMobile}
+                showMobileSettings={showMobileSettings}
+                orientation={orientation}
+                setOrientation={setOrientation}
+                size={size}
+                setSize={setSize}
+                material={material}
+                setMaterial={setMaterial}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                background={background}
+                elements={elements}
+                price={price}
+                handleAddToCart={handleAddToCart}
+                isAdmin={isAdmin}
+                handleSaveTemplate={handleSaveTemplate}
+                setShowMobileSettings={setShowMobileSettings}
+            />
 
             {/* Context Menu */}
-            {
-                contextMenu.visible && (
-                    <div style={{
-                        position: 'fixed',
-                        top: contextMenu.y,
-                        left: contextMenu.x,
-                        background: 'white',
-                        border: '1px solid var(--border)',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        zIndex: 1000,
-                        minWidth: '160px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '2px'
-                    }}>
-                        <button
-                            onClick={() => duplicateElement(contextMenu.elementId!)}
-                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
-                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
-                        >
-                            <Copy size={14} />
-                            Duplică Element
-                        </button>
-                        <button
-                            onClick={() => bringToFront(contextMenu.elementId!)}
-                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
-                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
-                        >
-                            <ArrowUp size={14} />
-                            Adu în față
-                        </button>
-                        <button
-                            onClick={() => sendToBack(contextMenu.elementId!)}
-                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px' }}
-                            className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
-                        >
-                            <ArrowDown size={14} />
-                            Trimite în spate
-                        </button>
-                        <div style={{ height: '1px', background: 'var(--border)', margin: '0.25rem 0' }} />
-                        <button
-                            onClick={() => deleteElement(contextMenu.elementId!)}
-                            style={{ padding: '0.5rem 0.75rem', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', borderRadius: '4px', color: '#ef4444' }}
-                            className="hover:bg-red-50 transition-colors flex items-center gap-2"
-                        >
-                            <X size={14} />
-                            ț˜terge Element
-                        </button>
-                    </div>
-                )
-            }
+            <ContextMenu
+                visible={contextMenu.visible}
+                x={contextMenu.x}
+                y={contextMenu.y}
+                elementId={contextMenu.elementId}
+                duplicateElement={duplicateElement}
+                bringToFront={bringToFront}
+                sendToBack={sendToBack}
+                deleteElement={deleteElement}
+                onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+            />
 
             <style jsx>{`
         .tool-btn {
