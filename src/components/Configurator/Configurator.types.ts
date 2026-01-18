@@ -13,7 +13,7 @@ export interface ConfigElement {
     // Common props
     scale?: number;
     borderRadius?: string;
-    maskShape?: 'rect' | 'circle' | 'heart' | 'star' | 'hexagon';
+    maskShape?: 'none' | 'rect' | 'circle' | 'heart' | 'star' | 'hexagon' | 'square';
     rotation?: number;
     effect?: 'none' | 'shadow' | 'lift' | 'hollow' | 'splice' | 'echo' | 'glitch' | 'neon' | '3d';
     // Filters

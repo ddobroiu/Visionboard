@@ -79,10 +79,9 @@ export function use3DPreview(
                         ctx.clip();
                     } else if (el.maskShape === 'heart') {
                         ctx.beginPath();
-                        const topY = cy - r * 0.3;
-                        ctx.moveTo(cx, cy + r * 0.7);
-                        ctx.bezierCurveTo(cx - r, cy - r * 0.5, cx - r * 0.5, cy - r * 1.2, cx, cy - r * 0.5);
-                        ctx.bezierCurveTo(cx + r * 0.5, cy - r * 1.2, cx + r, cy - r * 0.5, cx, cy + r * 0.7);
+                        ctx.moveTo(cx, cy + r * 0.75);
+                        ctx.bezierCurveTo(cx - r * 1.2, cy - r * 0.3, cx - r * 0.5, cy - r * 1.1, cx, cy - r * 0.3);
+                        ctx.bezierCurveTo(cx + r * 0.5, cy - r * 1.1, cx + r * 1.2, cy - r * 0.3, cx, cy + r * 0.75);
                         ctx.clip();
                     } else if (el.maskShape === 'hexagon') {
                         ctx.beginPath();
@@ -109,18 +108,34 @@ export function use3DPreview(
                         ctx.clip();
                     }
 
-                    // Draw image with "cover" logic on the standard canvas size
+                    // Draw image
                     let dw, dh, dx, dy;
-                    if (imgRatio > 1) {
-                        dh = size;
-                        dw = size * imgRatio;
+                    const standardSize = 200 * scale;
+
+                    if (el.maskShape === 'none' || !el.maskShape) {
+                        // Original aspect ratio
+                        if (imgRatio > 1) {
+                            dw = standardSize;
+                            dh = standardSize / imgRatio;
+                        } else {
+                            dh = standardSize;
+                            dw = standardSize * imgRatio;
+                        }
                         dx = -dw / 2;
-                        dy = -size / 2;
-                    } else {
-                        dw = size;
-                        dh = size / imgRatio;
-                        dx = -size / 2;
                         dy = -dh / 2;
+                    } else {
+                        // Square box (cover logic) for all shapes including 'square'
+                        if (imgRatio > 1) {
+                            dh = standardSize;
+                            dw = standardSize * imgRatio;
+                            dx = -dw / 2;
+                            dy = -standardSize / 2;
+                        } else {
+                            dw = standardSize;
+                            dh = standardSize / imgRatio;
+                            dx = -standardSize / 2;
+                            dy = -dh / 2;
+                        }
                     }
 
                     if (el.filters) {

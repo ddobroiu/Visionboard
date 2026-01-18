@@ -152,14 +152,21 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({
                         {el.color ? (
                             <div style={{
                                 width: '200px', height: '200px', backgroundColor: el.color,
-                                WebkitMaskImage: `url(${el.content})`, maskImage: `url(${el.content})`,
-                                WebkitMaskSize: 'contain', maskSize: 'contain',
-                                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-                                WebkitMaskPosition: 'center', maskPosition: 'center',
+                                WebkitMaskImage: el.maskShape === 'heart'
+                                    ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")`
+                                    : `url(${el.content})`,
+                                WebkitMaskSize: 'contain',
+                                WebkitMaskRepeat: 'no-repeat',
+                                WebkitMaskPosition: 'center',
+                                maskImage: el.maskShape === 'heart'
+                                    ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")`
+                                    : `url(${el.content})`,
+                                maskSize: 'contain',
+                                maskRepeat: 'no-repeat',
+                                maskPosition: 'center',
                                 clipPath: (el.maskShape === 'circle') ? 'circle(50%)' :
-                                    (el.maskShape === 'heart') ? 'path("M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")' :
-                                        (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
-                                            (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
+                                    (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                        (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none',
                             }} />
                         ) : (
                             <img
@@ -167,17 +174,24 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({
                                 alt="uploaded"
                                 draggable="false"
                                 style={{
-                                    width: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
-                                    height: (el.maskShape && el.maskShape !== 'rect') ? '200px' : 'auto',
+                                    width: (el.maskShape && el.maskShape !== 'none') ? '200px' : 'auto',
+                                    height: (el.maskShape && el.maskShape !== 'none') ? '200px' : 'auto',
                                     maxWidth: '300px',
                                     display: 'block',
                                     pointerEvents: 'none',
                                     userSelect: 'none',
-                                    objectFit: 'cover',
+                                    objectFit: (el.maskShape && el.maskShape !== 'none') ? 'cover' : 'contain',
                                     clipPath: (el.maskShape === 'circle') ? 'circle(50% at 50% 50%)' :
-                                        (el.maskShape === 'heart') ? 'path("M100 171.6L20.8 88.3C4.2 71.1 0 49.3 0 29.5 0 9.7 13.1 0 29.1 0 45.1 0 54.5 11.8 62.5 24.1 70.3 36.4 74.3 43.1 82.5 43.1S94.7 36.4 102.5 24.1C110.5 11.8 119.9 0 135.9 0 151.8 0 165 9.7 165 29.5 165 49.3 160.8 71.1 144.2 88.3L65 171.6")' :
-                                            (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
-                                                (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none'
+                                        (el.maskShape === 'hexagon') ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                            (el.maskShape === 'star') ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' : 'none',
+                                    WebkitMaskImage: el.maskShape === 'heart' ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")` : 'none',
+                                    WebkitMaskSize: 'contain',
+                                    WebkitMaskRepeat: 'no-repeat',
+                                    WebkitMaskPosition: 'center',
+                                    maskImage: el.maskShape === 'heart' ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E")` : 'none',
+                                    maskSize: 'contain',
+                                    maskRepeat: 'no-repeat',
+                                    maskPosition: 'center',
                                 }}
                             />
                         )}

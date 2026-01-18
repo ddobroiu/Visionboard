@@ -1,5 +1,5 @@
 import React from 'react';
-import { Square, Circle, Heart, Hexagon, Star } from 'lucide-react';
+import { Square, Circle, Heart, Hexagon, Star, Image as ImageIcon } from 'lucide-react';
 import { ConfigElement, FONTS } from './Configurator.types';
 
 interface PropertiesPanelProps {
@@ -305,7 +305,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                             {[
-                                { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
+                                { id: 'none', label: 'Original', icon: <ImageIcon size={14} /> },
+                                { id: 'square', label: 'Pătrat', icon: <Square size={14} /> },
                                 { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
                                 { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
                                 { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
@@ -316,8 +317,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                                     onClick={() => updateElementStyle(el.id, 'maskShape', shape.id as any)}
                                     style={{
                                         padding: '0.5rem', borderRadius: '8px',
-                                        border: (el.maskShape || 'rect') === shape.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                        background: (el.maskShape || 'rect') === shape.id ? 'var(--accent)' : 'white',
+                                        border: (el.maskShape || 'none') === shape.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                        background: (el.maskShape || 'none') === shape.id ? 'var(--accent)' : 'white',
                                         cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600,
                                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
                                     }}
@@ -335,104 +336,105 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         el.content.startsWith('data:image/svg+xml') ||
                         el.content.startsWith('data:image/png') ||
                         el.color) && (
-                    <div>
-                        <label style={{ fontSize: '0.9rem', fontWeight: 700, display: 'block', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Filtre Imagine</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {/* Brightness */}
                             <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Luminozitate</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.brightness ?? 1) * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="2" step="0.1"
-                                    value={el.filters?.brightness ?? 1}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, brightness: parseFloat(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                <label style={{ fontSize: '0.9rem', fontWeight: 700, display: 'block', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Filtre Imagine</label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {/* Brightness */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Luminozitate</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.brightness ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="2" step="0.1"
+                                            value={el.filters?.brightness ?? 1}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, brightness: parseFloat(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            {/* Contrast */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Contrast</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.contrast ?? 1) * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="2" step="0.1"
-                                    value={el.filters?.contrast ?? 1}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, contrast: parseFloat(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                    {/* Contrast */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Contrast</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.contrast ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="2" step="0.1"
+                                            value={el.filters?.contrast ?? 1}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, contrast: parseFloat(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            {/* Saturation */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Saturație</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.saturate ?? 1) * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="3" step="0.1"
-                                    value={el.filters?.saturate ?? 1}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, saturate: parseFloat(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                    {/* Saturation */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Saturație</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.saturate ?? 1) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="3" step="0.1"
+                                            value={el.filters?.saturate ?? 1}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, saturate: parseFloat(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            {/* Grayscale */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Alb-Negru</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.grayscale ?? 0) * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="1" step="0.1"
-                                    value={el.filters?.grayscale ?? 0}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, grayscale: parseFloat(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                    {/* Grayscale */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Alb-Negru</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.grayscale ?? 0) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="1" step="0.1"
+                                            value={el.filters?.grayscale ?? 0}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, grayscale: parseFloat(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            {/* Sepia */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Sepia</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.sepia ?? 0) * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="1" step="0.1"
-                                    value={el.filters?.sepia ?? 0}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, sepia: parseFloat(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                    {/* Sepia */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Sepia</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{Math.round((el.filters?.sepia ?? 0) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="1" step="0.1"
+                                            value={el.filters?.sepia ?? 0}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, sepia: parseFloat(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            {/* Blur */}
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Blur</label>
-                                    <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{el.filters?.blur ?? 0}px</span>
-                                </div>
-                                <input
-                                    type="range" min="0" max="20" step="1"
-                                    value={el.filters?.blur ?? 0}
-                                    onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, blur: parseInt(e.target.value) })}
-                                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                />
-                            </div>
+                                    {/* Blur */}
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>Blur</label>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{el.filters?.blur ?? 0}px</span>
+                                        </div>
+                                        <input
+                                            type="range" min="0" max="20" step="1"
+                                            value={el.filters?.blur ?? 0}
+                                            onChange={(e) => updateElementStyle(el.id, 'filters', { ...el.filters, blur: parseInt(e.target.value) })}
+                                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                                        />
+                                    </div>
 
-                            <button
-                                onClick={() => updateElementStyle(el.id, 'filters', undefined)}
-                                style={{
-                                    padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--border)',
-                                    background: 'white', fontSize: '0.7rem', cursor: 'pointer', marginTop: '0.5rem'
-                                }}
-                            >
-                                Resetează Filtrele
-                            </button>
-                        </div>
-                    </div>
+                                    <button
+                                        onClick={() => updateElementStyle(el.id, 'filters', undefined)}
+                                        style={{
+                                            padding: '0.4rem', borderRadius: '4px', border: '1px solid var(--border)',
+                                            background: 'white', fontSize: '0.7rem', cursor: 'pointer', marginTop: '0.5rem'
+                                        }}
+                                    >
+                                        Resetează Filtrele
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                     <button
                         className="btn btn-outline"
