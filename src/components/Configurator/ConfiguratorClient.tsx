@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X, GripHorizontal } from 'lucide-react';
+import { Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X, GripHorizontal, LayoutGrid } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/components/CartContext';
+import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
 
 interface ConfigElement {
     id: string;
@@ -21,6 +22,7 @@ export default function ConfiguratorClient() {
     const [elements, setElements] = useState<ConfigElement[]>([]);
     const [background, setBackground] = useState<string>('#ffffff');
     const [activeTool, setActiveTool] = useState<string | null>(null);
+    const [activeLibraryCategory, setActiveLibraryCategory] = useState<LibraryCategory>('masini');
     const { addItem } = useCart();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,26 +117,82 @@ export default function ConfiguratorClient() {
                     <ImageIcon size={24} />
                     <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Fundal</span>
                 </button>
+                <button className={`tool-btn ${activeTool === 'library' ? 'active' : ''}`} title="Library" onClick={() => setActiveTool(activeTool === 'library' ? null : 'library')}>
+                    <LayoutGrid size={24} />
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Bibliotecă</span>
+                </button>
             </aside>
 
-            {/* Tool Panel (for Background) */}
-            {activeTool === 'bg' && (
-                <div style={{ width: '200px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Culoare Fundal</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                        {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
-                            <button
-                                key={color}
-                                onClick={() => setBackground(color)}
-                                style={{
-                                    width: '32px', height: '32px', borderRadius: '50%',
-                                    background: color, border: '1px solid var(--border)',
-                                    cursor: 'pointer',
-                                    boxShadow: background === color ? '0 0 0 2px var(--primary)' : 'none'
-                                }}
-                            />
-                        ))}
-                    </div>
+            {/* Tool Panel (for Background & Library) */}
+            {(activeTool === 'bg' || activeTool === 'library') && (
+                <div style={{ width: '300px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9, display: 'flex', flexDirection: 'column' }}>
+
+                    {activeTool === 'bg' && (
+                        <>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Culoare Fundal</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                                {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
+                                    <button
+                                        key={color}
+                                        onClick={() => setBackground(color)}
+                                        style={{
+                                            width: '32px', height: '32px', borderRadius: '50%',
+                                            background: color, border: '1px solid var(--border)',
+                                            cursor: 'pointer',
+                                            boxShadow: background === color ? '0 0 0 2px var(--primary)' : 'none'
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {activeTool === 'library' && (
+                        <>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
+                                {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setActiveLibraryCategory(cat as LibraryCategory)}
+                                        style={{
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: '99px',
+                                            border: '1px solid var(--border)',
+                                            background: activeLibraryCategory === cat ? 'var(--primary)' : 'white',
+                                            color: activeLibraryCategory === cat ? 'white' : 'var(--foreground)',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto' }}>
+                                {LIBRARY_ASSETS.filter(item => item.category === activeLibraryCategory).map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => addElement('image', item.url)}
+                                        style={{
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '0.5rem',
+                                            overflow: 'hidden',
+                                            background: 'white',
+                                            cursor: 'pointer',
+                                            height: '100px',
+                                            position: 'relative'
+                                        }}
+                                        className="hover:shadow-md transition-shadow"
+                                    >
+                                        <img src={item.url} alt={item.category} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
