@@ -14,18 +14,7 @@ import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
 declare global {
     namespace JSX {
         interface IntrinsicElements {
-            'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-                src?: string;
-                poster?: string;
-                alt?: string;
-                'shadow-intensity'?: string;
-                'camera-controls'?: boolean;
-                'auto-rotate'?: boolean;
-                ar?: boolean;
-                'ar-modes'?: string;
-                'tone-mapping'?: string;
-                scale?: string;
-            }, HTMLElement>;
+            'model-viewer': any;
         }
     }
 }
@@ -319,7 +308,11 @@ export default function ConfiguratorClient() {
     };
 
     useEffect(() => {
-        if (viewMode === '3d') update3DTexture();
+        if (viewMode === '3d') {
+            // Give it a moment to mount and initialize the ref
+            const timer = setTimeout(update3DTexture, 500);
+            return () => clearTimeout(timer);
+        }
     }, [elements, background, size, orientation, viewMode]);
 
     const duplicateElement = (id: string) => {
@@ -460,7 +453,7 @@ export default function ConfiguratorClient() {
 
     return (
         <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-            <Script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module" strategy="lazyOnload" />
+            <Script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module" strategy="afterInteractive" />
 
             <input
                 type="file"
@@ -1156,13 +1149,16 @@ export default function ConfiguratorClient() {
                     style={{
                         width: orientation === 'landscape' ? '600px' : '400px',
                         height: orientation === 'landscape' ? '400px' : '600px',
-                        background: background.startsWith('data:') || background.startsWith('http') ? `url(${background})` : background,
+                        background: viewMode === 'workspace'
+                            ? (background.startsWith('data:') || background.startsWith('http') ? `url(${background})` : background)
+                            : 'white',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         transition: 'all 0.3s ease',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        boxShadow: viewMode === 'workspace' ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' : 'none',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        borderRadius: '8px'
                     }}
                 >
                     {elements.length === 0 && (
@@ -1299,22 +1295,30 @@ export default function ConfiguratorClient() {
                             </motion.div>
                         ))
                     ) : (
-                        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#f1f5f9' }}>
+                        <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, background: '#f8fafc', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
                             <model-viewer
+                                key={`3d-${orientation}-${size}`}
                                 ref={modelViewerRef}
                                 src={orientation === 'landscape' ? "/products/canvas/canvas_landscape.glb" : "/products/canvas/canvas_portret.glb"}
                                 alt="3D Preview"
                                 shadow-intensity="1"
                                 camera-controls
+                                auto-rotate
                                 ar
                                 tone-mapping="neutral"
-                                style={{ width: '100%', height: '100%' }}
+                                style={{ width: '100%', height: '100%', background: '#f8fafc' }}
                             />
+                            {/* Manual Refresh Button if it doesn't load automatically */}
                             <button
-                                onClick={() => setViewMode('workspace')}
-                                style={{ position: 'absolute', top: 20, right: 20, background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, zIndex: 100, display: 'flex', alignItems: 'center', gap: '8px' }}
+                                onClick={update3DTexture}
+                                style={{
+                                    position: 'absolute', bottom: 20, right: 20,
+                                    background: 'rgba(255,255,255,0.8)', border: '1px solid #cbd5e1',
+                                    padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
+                                    fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
+                                }}
                             >
-                                <Eye size={18} /> Înapoi la Editare
+                                <Sparkles size={14} /> Reîmprospătează 3D
                             </button>
                         </div>
                     )}
