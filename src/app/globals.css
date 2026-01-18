@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Pacifico&family=Bebas+Neue&family=Lobster&family=Caveat:wght@400;700&family=Cinzel:wght@400;700&family=Great+Vibes&family=Righteous&family=Satisfy&family=Courgette&display=swap');
+@import './text-effects.css';
 
 @tailwind base;
 @tailwind components;
@@ -119,4 +120,86 @@ button {
 
 .section {
   padding: 4rem 0;
+}
+
+/* Canva-like Text Effects */
+.effect-none {
+  text-shadow: none;
+}
+
+.effect-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.effect-lift {
+  text-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.effect-hollow {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-color: currentColor;
+}
+
+.effect-splice {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke-width: 2px;
+  -webkit-text-stroke-color: currentColor;
+  text-shadow: 2px 2px 0px #94a3b8;
+}
+
+.effect-echo {
+  text-shadow:
+    -2px -2px 0px rgba(0, 0, 0, 0.1),
+    -4px -4px 0px rgba(0, 0, 0, 0.1);
+}
+
+.effect-glitch {
+  position: relative;
+  text-shadow:
+    2px 2px 0px #ff00ff,
+    -2px -2px 0px #00ffff;
+}
+
+.effect-neon {
+  text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 40px currentColor;
+  filter: brightness(1.5);
+}
+
+.effect-background {
+  background-color: currentColor;
+  color: white;
+  /* Or inverted color */
+  padding: 0 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* For 3D we need a specific color usually, but let's try a generic shadow */
+.effect-3d {
+  text-shadow:
+    0 1px 0 #ccc,
+    0 2px 0 #c9c9c9,
+    0 3px 0 #bbb,
+    0 4px 0 #b9b9b9,
+    0 5px 0 #aaa,
+    0 6px 1px rgba(0, 0, 0, .1),
+    0 0 5px rgba(0, 0, 0, .1),
+    0 1px 3px rgba(0, 0, 0, .3),
+    0 3px 5px rgba(0, 0, 0, .2),
+    0 5px 10px rgba(0, 0, 0, .25);
+}
+
+/* Gradient needs element level handling or specific classes per color, 
+   but we can define a utility that expects the element to have background-image set 
+*/
+.effect-gradient {
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }

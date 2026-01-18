@@ -1,0 +1,339 @@
+import React from 'react';
+import { Square, Circle, Heart, Hexagon, Star } from 'lucide-react';
+import { ConfigElement, FONTS } from './Configurator.types';
+
+interface PropertiesPanelProps {
+    activeTool: string | null;
+    selectedId: string | null;
+    elements: ConfigElement[];
+    updateElementStyle: (id: string, property: keyof ConfigElement, value: any) => void;
+    setSelectedId: (id: string | null) => void;
+    deleteElement: (id: string) => void; // Optional if we want delete button here
+}
+
+export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
+    activeTool,
+    selectedId,
+    elements,
+    updateElementStyle,
+    setSelectedId,
+}) => {
+
+    // Helper to find selected element
+    const el = selectedId ? elements.find(e => e.id === selectedId) : null;
+
+    if (!el || !selectedId) return null;
+
+    const panelStyle: React.CSSProperties = {
+        width: '250px',
+        borderRight: '1px solid var(--border)',
+        background: 'var(--surface)',
+        padding: '1rem',
+        zIndex: 9,
+        position: 'relative' // Or absolute if handled by parent layout, preserving existing behavior
+        // The original was conditional rendering in the flow, so layout depends on parent.
+        // We'll assume this is placed where the original panels were.
+    };
+
+    if (activeTool === 'edit-text' && el.type === 'text') {
+        return (
+            <div style={panelStyle}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Culoare */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                                type="color"
+                                value={el.color || '#000000'}
+                                onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
+                                style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer' }}
+                            />
+                            <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem' }}>
+                                {el.color}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Text Scale */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărește / Micșorează Text: {Math.round((el.scale || 1) * 100)}%</label>
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="4"
+                            step="0.1"
+                            value={el.scale || 1}
+                            onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                    </div>
+
+                    {/* Font Size */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font Excată: {el.fontSize}px</label>
+                        <input
+                            type="range"
+                            min="12"
+                            max="120"
+                            value={el.fontSize || 24}
+                            onChange={(e) => updateElementStyle(el.id, 'fontSize', parseInt(e.target.value))}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+
+                    {/* Font Family */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Font</label>
+                        <select
+                            value={el.fontFamily}
+                            onChange={(e) => updateElementStyle(el.id, 'fontFamily', e.target.value)}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }}
+                        >
+                            {FONTS.map(f => (
+                                <option key={f.value} value={f.value}>{f.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Text Effects */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Efecte Text</label>
+                        <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem' }}>
+                            {[
+                                {
+                                    category: "Basic", effects: [
+                                        { id: 'none', label: 'Normal' },
+                                        { id: 'shadow', label: 'Shadow' },
+                                        { id: 'lift', label: 'Lift' },
+                                    ]
+                                },
+                                {
+                                    category: "Luminoase / Glow", effects: [
+                                        { id: 'neon', label: 'Neon' },
+                                        { id: 'glow', label: 'Glow' },
+                                        { id: 'soft-glow', label: 'Soft' },
+                                        { id: 'outer-glow', label: 'Outer' },
+                                    ]
+                                },
+                                {
+                                    category: "Colorate", effects: [
+                                        { id: 'gradient-sunset', label: 'Sunset' },
+                                        { id: 'gradient-ocean', label: 'Ocean' },
+                                        { id: 'rainbow', label: 'Rainbow' },
+                                        { id: 'duotone', label: 'Duotone' },
+                                    ]
+                                },
+                                {
+                                    category: "Contur / Stroke", effects: [
+                                        { id: 'outline', label: 'Outline' },
+                                        { id: 'double-outline', label: 'Double' },
+                                        { id: 'hollow', label: 'Hollow' },
+                                    ]
+                                },
+                                {
+                                    category: "3D / Depth", effects: [
+                                        { id: '3d', label: '3D' },
+                                        { id: 'extruded', label: 'Hrană' },
+                                        { id: 'shadow-stack', label: 'Stack' },
+                                        { id: 'long-shadow', label: 'Long' },
+                                    ]
+                                },
+                                {
+                                    category: "Fun", effects: [
+                                        { id: 'bubble', label: 'Bubble' },
+                                        { id: 'candy', label: 'Candy' },
+                                        { id: 'cartoon', label: 'Cartoon' },
+                                    ]
+                                },
+                                {
+                                    category: "Glam & Retro", effects: [
+                                        { id: 'glass', label: 'Glass' },
+                                        { id: 'metallic', label: 'Metal' },
+                                        { id: 'gold', label: 'Gold' },
+                                        { id: 'retro', label: 'Retro' },
+                                        { id: 'vaporwave', label: 'Vapor' },
+                                        { id: 'cyberpunk', label: 'Cyber' },
+                                    ]
+                                }
+                            ].map(group => (
+                                <div key={group.category} style={{ marginBottom: '1rem' }}>
+                                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--secondary-foreground)', marginBottom: '0.3rem', textTransform: 'uppercase' }}>{group.category}</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                                        {group.effects.map(eff => (
+                                            <button
+                                                key={eff.id}
+                                                onClick={() => updateElementStyle(el.id, 'effect', eff.id as any)}
+                                                className={`effect-${eff.id}`}
+                                                style={{
+                                                    padding: '0.4rem 0.2rem',
+                                                    borderRadius: '4px',
+                                                    border: (el.effect || 'none') === eff.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                                    background: '#f8fafc',
+                                                    fontSize: '0.65rem',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'center',
+                                                    overflow: 'hidden',
+                                                    whiteSpace: 'nowrap',
+                                                    textOverflow: 'ellipsis'
+                                                }}
+                                                title={eff.label}
+                                            >
+                                                {eff.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Rotation */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="360"
+                            value={el.rotation || 0}
+                            onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                    </div>
+
+                    <button
+                        className="btn btn-outline"
+                        onClick={() => setSelectedId(null)}
+                        style={{ marginTop: '1rem', fontSize: '0.8rem' }}
+                    >
+                        Închide Editarea
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (activeTool === 'edit-image' && el.type === 'image') {
+        return (
+            <div style={panelStyle}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Imagine</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                    {/* Size */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
+                        <input
+                            type="range"
+                            min="0.1"
+                            max="3"
+                            step="0.05"
+                            value={el.scale || 1}
+                            onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                    </div>
+
+                    {/* Rotation */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="360"
+                            value={el.rotation || 0}
+                            onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                        />
+                    </div>
+
+                    {/* Tints */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare Element (pentru SVG/Vectori)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <input
+                                type="color"
+                                value={el.color || '#000000'}
+                                onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
+                                style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
+                            />
+                            <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
+                                {el.color && el.color.startsWith('#') ? el.color.toUpperCase() : (el.color ? 'PERSONALIZAT' : 'ORIGINAL')}
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <button
+                                onClick={() => updateElementStyle(el.id, 'color', undefined)}
+                                style={{
+                                    width: '32px', height: '32px', borderRadius: '4px',
+                                    border: '1px solid var(--border)', background: 'white',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', fontSize: '0.6rem', fontWeight: 'bold',
+                                    boxShadow: !el.color ? '0 0 0 2px var(--primary)' : 'none'
+                                }}
+                                title="Original"
+                            >
+                                ORIG
+                            </button>
+                            {['#000000', '#7c3aed', '#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#ec4899', '#8b5cf6'].map(c => (
+                                <button
+                                    key={c}
+                                    onClick={() => updateElementStyle(el.id, 'color', c)}
+                                    style={{
+                                        width: '32px', height: '32px', borderRadius: '4px',
+                                        background: c, border: '1px solid var(--border)',
+                                        cursor: 'pointer',
+                                        boxShadow: el.color === c ? '0 0 0 2px var(--primary)' : 'none'
+                                    }}
+                                />
+                            ))}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                            * Sfat: Aplică o culoare pentru a crea o siluetă sau "ORIG" pentru culorile native.
+                        </div>
+                    </div>
+
+                    {/* Mask Shapes */}
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                            {[
+                                { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
+                                { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
+                                { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
+                                { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
+                                { id: 'star', label: 'Stea', icon: <Star size={14} /> }
+                            ].map(shape => (
+                                <button
+                                    key={shape.id}
+                                    onClick={() => updateElementStyle(el.id, 'maskShape', shape.id as any)}
+                                    style={{
+                                        padding: '0.5rem', borderRadius: '8px',
+                                        border: (el.maskShape || 'rect') === shape.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                        background: (el.maskShape || 'rect') === shape.id ? 'var(--accent)' : 'white',
+                                        cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600,
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                                    }}
+                                >
+                                    {shape.icon}
+                                    {shape.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button
+                        className="btn btn-outline"
+                        onClick={() => setSelectedId(null)}
+                        style={{ marginTop: '1rem', fontSize: '0.8rem' }}
+                    >
+                        Închide Editarea
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return null;
+};

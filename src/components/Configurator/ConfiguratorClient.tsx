@@ -1,5 +1,7 @@
 ﻿'use client';
 
+import { useSession } from "next-auth/react";
+
 import { useState, useRef, useEffect } from 'react';
 import {
     Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X,
@@ -11,54 +13,16 @@ import Script from 'next/script';
 import { useCart } from '@/components/CartContext';
 import { LIBRARY_ASSETS, LibraryCategory } from '@/lib/libraryAssets';
 import { VISION_TEMPLATES, VisionTemplate } from '@/lib/templates';
+import { Toolbar } from './Toolbar';
+import { PropertiesPanel } from './PropertiesPanel';
+import { ConfigElement, FONTS } from './Configurator.types';
 
 
-interface ConfigElement {
-    id: string;
-    type: 'image' | 'text';
-    content: string; // Used for text content or image URL
-    x: number;
-    y: number;
-    style?: React.CSSProperties;
-    // Style props
-    fontSize?: number;
-    color?: string; // Used for text color OR image tint (via mask)
-    fontFamily?: string;
-    fontWeight?: string;
-    // Common props
-    scale?: number;
-    borderRadius?: string;
-    maskShape?: 'rect' | 'circle' | 'heart' | 'star' | 'hexagon';
-    rotation?: number;
-}
 
-const FONTS = [
-    // Sans Serif
-    { label: 'Outfit (Modern)', value: 'var(--font-outfit), sans-serif' },
-    { label: 'Montserrat', value: 'Montserrat, sans-serif' },
-    { label: 'Bebas Neue (Solid)', value: 'Bebas Neue, sans-serif' },
-    { label: 'Righteous', value: 'Righteous, cursive' },
-
-    // Serif
-    { label: 'Playfair Display', value: 'Playfair Display, serif' },
-    { label: 'Cinzel (Elegant)', value: 'Cinzel, serif' },
-    { label: 'Clasic', value: 'Times New Roman, serif' },
-
-    // Handwritten / Script
-    { label: 'Dancing Script', value: 'Dancing Script, cursive' },
-    { label: 'Pacifico', value: 'Pacifico, cursive' },
-    { label: 'Caveat', value: 'Caveat, cursive' },
-    { label: 'Great Vibes', value: 'Great Vibes, cursive' },
-    { label: 'Satisfy', value: 'Satisfy, cursive' },
-    { label: 'Courgette', value: 'Courgette, cursive' },
-
-    // Decorative
-    { label: 'Lobster', value: 'Lobster, display' },
-    { label: 'Impact', value: 'Impact, sans-serif' },
-    { label: 'Courier', value: 'Courier New, monospace' },
-];
 
 export default function ConfiguratorClient() {
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as any)?.role === 'admin';
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -596,6 +560,39 @@ export default function ConfiguratorClient() {
         boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
     };
 
+
+    const handleSaveTemplate = async () => {
+        const name = prompt("Nume Template (Admin):");
+        if (!name) return;
+
+        try {
+            const res = await fetch('/api/designs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name,
+                    isPublic: true,
+                    data: {
+                        elements,
+                        background,
+                        orientation,
+                        size,
+                        material
+                    }
+                })
+            });
+
+            if (res.ok) {
+                alert("Template salvat cu succes!");
+            } else {
+                alert("Eroare la salvare (Forbidden?).");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Eroare la salvare.");
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflow: 'hidden', position: 'relative' }}>
             <Script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module" strategy="afterInteractive" />
@@ -616,32 +613,12 @@ export default function ConfiguratorClient() {
             />
 
             {/* Sidebar Tools */}
-            <aside style={sidebarStyle}>
-                <button className={`tool-btn ${activeTool === 'upload' ? 'active' : ''}`} title="Upload Image" onClick={() => setActiveTool(activeTool === 'upload' ? null : 'upload')}>
-                    <Upload size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Upload</span>
-                </button>
-                <button className={`tool-btn ${activeTool === 'text' ? 'active' : ''}`} title="Add Text" onClick={() => addElement('text', 'Dublu click pentru editare')}>
-                    <Type size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Text</span>
-                </button>
-                <button className={`tool-btn ${activeTool === 'bg' ? 'active' : ''}`} title="Background" onClick={() => setActiveTool(activeTool === 'bg' ? null : 'bg')}>
-                    <ImageIcon size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Fundal</span>
-                </button>
-                <button className={`tool-btn ${activeTool === 'templates' ? 'active' : ''}`} title="Design" onClick={() => setActiveTool(activeTool === 'templates' ? null : 'templates')}>
-                    <LayoutTemplate size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Design</span>
-                </button>
-                <button className={`tool-btn ${activeTool === 'library' ? 'active' : ''}`} title="Library" onClick={() => setActiveTool(activeTool === 'library' ? null : 'library')}>
-                    <LayoutGrid size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Bibliotecă</span>
-                </button>
-                <button className={`tool-btn ${activeTool === 'elements' ? 'active' : ''}`} title="Elements" onClick={() => setActiveTool(activeTool === 'elements' ? null : 'elements')}>
-                    <Sparkles size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Elemente</span>
-                </button>
-            </aside>
+            <Toolbar
+                activeTool={activeTool}
+                setActiveTool={setActiveTool}
+                addElement={addElement}
+                isMobile={isMobile}
+            />
 
             <div style={toolPanelStyle}>{activeTool === 'upload' && (
                 <>
@@ -1090,229 +1067,15 @@ export default function ConfiguratorClient() {
                     </>
                 )}
             </div>
-            {/* Text Edit Panel (Activates when text selected or tool active) */}
-            {activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text' && (
-                <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
-
-                    {(() => {
-                        const el = elements.find(e => e.id === selectedId)!;
-                        return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {/* Culoare */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare</label>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <input
-                                            type="color"
-                                            value={el.color || '#000000'}
-                                            onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
-                                            style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer' }}
-                                        />
-                                        <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem' }}>
-                                            {el.color}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Text Scale / Zoom */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărește / Micșorează Text: {Math.round((el.scale || 1) * 100)}%</label>
-                                    <input
-                                        type="range"
-                                        min="0.5"
-                                        max="4"
-                                        step="0.1"
-                                        value={el.scale || 1}
-                                        onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
-                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                    />
-                                </div>
-
-                                {/* Font Size */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font Excată: {el.fontSize}px</label>
-                                    <input
-                                        type="range"
-                                        min="12"
-                                        max="120"
-                                        value={el.fontSize || 24}
-                                        onChange={(e) => updateElementStyle(el.id, 'fontSize', parseInt(e.target.value))}
-                                        style={{ width: '100%' }}
-                                    />
-                                </div>
-
-                                {/* Font Family */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Font</label>
-                                    <select
-                                        value={el.fontFamily}
-                                        onChange={(e) => updateElementStyle(el.id, 'fontFamily', e.target.value)}
-                                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }}
-                                    >
-                                        {FONTS.map(f => (
-                                            <option key={f.value} value={f.value}>{f.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Rotation Slider */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="360"
-                                        value={el.rotation || 0}
-                                        onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
-                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                    />
-                                </div>
-
-                                {/* Buttons */}
-                                <button
-                                    className="btn btn-outline"
-                                    onClick={() => setSelectedId(null)}
-                                    style={{ marginTop: '1rem', fontSize: '0.8rem' }}
-                                >
-                                    Închide Editarea
-                                </button>
-                            </div>
-                        );
-                    })()}
-                </div>
-            )}
-
-            {/* Image Edit Panel */}
-            {activeTool === 'edit-image' && selectedId && elements.find(e => e.id === selectedId)?.type === 'image' && (
-                <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Imagine</h3>
-
-                    {(() => {
-                        const el = elements.find(e => e.id === selectedId)!;
-                        return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                {/* Mărime (Scale) */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
-                                    <input
-                                        type="range"
-                                        min="0.1"
-                                        max="3"
-                                        step="0.05"
-                                        value={el.scale || 1}
-                                        onChange={(e) => updateElementStyle(el.id, 'scale', parseFloat(e.target.value))}
-                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                    />
-                                </div>
-
-                                {/* Rotation Slider */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="360"
-                                        value={el.rotation || 0}
-                                        onChange={(e) => updateElementStyle(el.id, 'rotation', parseInt(e.target.value))}
-                                        style={{ width: '100%', accentColor: 'var(--primary)' }}
-                                    />
-                                </div>
-
-                                {/* Color Picker for Images (Tints/Masks) */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare Element (pentru SVG/Vectori)</label>
-
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                                        <input
-                                            type="color"
-                                            value={el.color || '#000000'}
-                                            onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
-                                            style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
-                                        />
-                                        <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
-                                            {el.color && el.color.startsWith('#') ? el.color.toUpperCase() : (el.color ? 'PERSONALIZAT' : 'ORIGINAL')}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                        {/* Reset/Original Button */}
-                                        <button
-                                            onClick={() => updateElementStyle(el.id, 'color', undefined)}
-                                            style={{
-                                                width: '32px', height: '32px', borderRadius: '4px',
-                                                border: '1px solid var(--border)', background: 'white',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                cursor: 'pointer', fontSize: '0.6rem', fontWeight: 'bold',
-                                                boxShadow: !el.color ? '0 0 0 2px var(--primary)' : 'none'
-                                            }}
-                                            title="Original"
-                                        >
-                                            ORIG
-                                        </button>
-                                        {['#000000', '#7c3aed', '#ef4444', '#10b981', '#3b82f6', '#f59e0b', '#ffffff', '#ec4899', '#8b5cf6'].map(c => (
-                                            <button
-                                                key={c}
-                                                onClick={() => updateElementStyle(el.id, 'color', c)}
-                                                style={{
-                                                    width: '32px', height: '32px', borderRadius: '4px',
-                                                    background: c, border: '1px solid var(--border)',
-                                                    cursor: 'pointer',
-                                                    boxShadow: el.color === c ? '0 0 0 2px var(--primary)' : 'none'
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                        * Sfat: Aplică o culoare pentru a crea o siluetă sau "ORIG" pentru culorile native.
-                                    </div>
-                                </div>
-
-                                {/* Formă Imagine (Enhanced) */}
-                                <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                                        {[
-                                            { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
-                                            { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
-                                            { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
-                                            { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
-                                            { id: 'star', label: 'Stea', icon: <Star size={14} /> }
-                                        ].map(shape => (
-                                            <button
-                                                key={shape.id}
-                                                onClick={() => updateElementStyle(el.id, 'maskShape', shape.id as any)}
-                                                style={{
-                                                    padding: '0.5rem', borderRadius: '8px',
-                                                    border: (el.maskShape || 'rect') === shape.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                                    background: (el.maskShape || 'rect') === shape.id ? 'var(--accent)' : 'white',
-                                                    cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600,
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
-                                                }}
-                                            >
-                                                {shape.icon}
-                                                {shape.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
-                                    Sfat: Poți trage elementul oriunde în spațiul de lucru.
-                                </div>
-
-                                <button
-                                    className="btn btn-outline"
-                                    onClick={() => setSelectedId(null)}
-                                    style={{ marginTop: '1rem', fontSize: '0.8rem' }}
-                                >
-                                    Închide Editarea
-                                </button>
-                            </div>
-                        );
-                    })()}
-                </div>
-            )}
+            {/* Properties Panel (Text & Image Editing) */}
+            <PropertiesPanel
+                activeTool={activeTool}
+                selectedId={selectedId}
+                elements={elements}
+                updateElementStyle={updateElementStyle}
+                setSelectedId={setSelectedId}
+                deleteElement={deleteElement}
+            />
 
             {/* Image Edit Panel (shared for uploaded and vectors) */}
 
@@ -1477,7 +1240,7 @@ export default function ConfiguratorClient() {
                                                 pointerEvents: selectedId === el.id ? 'auto' : 'none',
                                                 cursor: selectedId === el.id ? 'text' : 'move'
                                             }}
-                                            className="editable-text"
+                                            className={`editable-text effect-${el.effect || 'none'}`}
                                         >
                                             {el.content}
                                         </div>
@@ -1551,43 +1314,45 @@ export default function ConfiguratorClient() {
 
 
             {/* Product Options */}
-            {isMobile && (
-                <>
-                    {/* Floating 3D Toggle */}
-                    <button
-                        onClick={() => setViewMode(viewMode === 'workspace' ? '3d' : 'workspace')}
-                        style={{
-                            position: 'absolute', top: '1rem', right: '1rem',
-                            background: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
-                            zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
-                        }}
-                    >
-                        <Box size={16} /> {viewMode === 'workspace' ? 'Vezi 3D' : 'Vezi 2D'}
-                    </button>
+            {
+                isMobile && (
+                    <>
+                        {/* Floating 3D Toggle */}
+                        <button
+                            onClick={() => setViewMode(viewMode === 'workspace' ? '3d' : 'workspace')}
+                            style={{
+                                position: 'absolute', top: '1rem', right: '1rem',
+                                background: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid var(--border)',
+                                zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
+                            }}
+                        >
+                            <Box size={16} /> {viewMode === 'workspace' ? 'Vezi 3D' : 'Vezi 2D'}
+                        </button>
 
-                    {/* Floating Settings/Order Button (bottom right above zoom) */}
-                    <button
-                        onClick={() => setShowMobileSettings(true)}
-                        style={{
-                            position: 'absolute', top: '1rem', right: '110px',
-                            background: 'var(--primary)', color: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none',
-                            zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
-                        }}
-                    >
-                        <ShoppingCart size={16} /> Comandă
-                    </button>
+                        {/* Floating Settings/Order Button (bottom right above zoom) */}
+                        <button
+                            onClick={() => setShowMobileSettings(true)}
+                            style={{
+                                position: 'absolute', top: '1rem', right: '110px',
+                                background: 'var(--primary)', color: 'white', padding: '0.6rem 1rem', borderRadius: '99px',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: 'none',
+                                zIndex: 40, fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px'
+                            }}
+                        >
+                            <ShoppingCart size={16} /> Comandă
+                        </button>
 
-                    {/* Overlay for Settings */}
-                    {showMobileSettings && (
-                        <div
-                            onClick={() => setShowMobileSettings(false)}
-                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
-                        />
-                    )}
-                </>
-            )}
+                        {/* Overlay for Settings */}
+                        {showMobileSettings && (
+                            <div
+                                onClick={() => setShowMobileSettings(false)}
+                                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
+                            />
+                        )}
+                    </>
+                )
+            }
             <aside style={{
                 width: isMobile ? '100%' : '350px',
                 height: isMobile ? 'auto' : '100%',
@@ -1769,6 +1534,16 @@ export default function ConfiguratorClient() {
                         <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
                         Adaugă în Coș
                     </button>
+                    {isAdmin && (
+                        <button
+                            className="btn btn-outline"
+                            style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }}
+                            onClick={handleSaveTemplate}
+                        >
+                            <Settings size={20} style={{ marginRight: '0.5rem' }} />
+                            Salvează Template
+                        </button>
+                    )}
                 </div>
             </aside>
 
