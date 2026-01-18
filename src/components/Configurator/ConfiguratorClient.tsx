@@ -59,6 +59,15 @@ const FONTS = [
 ];
 
 export default function ConfiguratorClient() {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const [material, setMaterial] = useState('canvas');
     const [size, setSize] = useState('40x60');
     const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
@@ -530,8 +539,64 @@ export default function ConfiguratorClient() {
         performPixabaySearch(pixabayQuery, false, 1);
     };
 
+        const sidebarStyle: React.CSSProperties = isMobile ? {
+        width: '100%',
+        height: '60px',
+        borderTop: '1px solid var(--border)',
+        borderRight: 'none',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        padding: '0 0.5rem',
+        background: 'var(--surface)',
+        zIndex: 20,
+        position: 'fixed',
+        bottom: 0,
+        left: 0
+    } : {
+        width: '80px',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '1rem 0',
+        background: 'var(--surface)',
+        zIndex: 10
+    };
+
+    const toolPanelStyle: React.CSSProperties = isMobile ? {
+        position: 'fixed',
+        left: 0,
+        bottom: '60px',
+        width: '100%',
+        height: '50vh',
+        borderTop: '1px solid var(--border)',
+        background: 'var(--surface)',
+        padding: '1rem',
+        zIndex: 19,
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
+        flexDirection: 'column',
+        boxShadow: '0 -5px 15px -3px rgba(0,0,0,0.1)',
+        borderTopLeftRadius: '16px',
+        borderTopRightRadius: '16px',
+    } : {
+        position: 'absolute',
+        left: '80px',
+        top: 0,
+        bottom: 0,
+        width: '300px',
+        borderRight: '1px solid var(--border)',
+        background: 'var(--surface)',
+        padding: '1rem',
+        zIndex: 9,
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
+        flexDirection: 'column',
+        boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
+    };
+
     return (
-        <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflow: 'hidden', position: 'relative' }}>
             <Script src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js" type="module" strategy="afterInteractive" />
 
             <input
@@ -550,7 +615,7 @@ export default function ConfiguratorClient() {
             />
 
             {/* Sidebar Tools */}
-            <aside style={{ width: '80px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0', background: 'var(--surface)', zIndex: 10 }}>
+            <aside style={sidebarStyle}>
                 <button className={`tool-btn ${activeTool === 'upload' ? 'active' : ''}`} title="Upload Image" onClick={handleUploadClick}>
                     <Upload size={24} />
                     <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Upload</span>
@@ -578,20 +643,7 @@ export default function ConfiguratorClient() {
             </aside>
 
             {/* Tool Panel (for Background, Library, Elements, Templates) */}
-            <div style={{
-                position: 'absolute',
-                left: '80px',
-                top: 0,
-                bottom: 0,
-                width: '300px',
-                borderRight: '1px solid var(--border)',
-                background: 'var(--surface)',
-                padding: '1rem',
-                zIndex: 9,
-                display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
-                flexDirection: 'column',
-                boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
-            }}>
+            <div style={toolPanelStyle}>
 
                 {activeTool === 'templates' && (
                     <>
@@ -1764,6 +1816,7 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
 
 
 
