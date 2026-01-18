@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
     Upload, Type, Image as ImageIcon, ShoppingCart, Settings, X,
     GripHorizontal, LayoutGrid, Sparkles, Copy, ArrowUp, ArrowDown,
-    Box, Eye
+    Box, Eye, Minus, Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Script from 'next/script';
@@ -33,6 +33,7 @@ interface ConfigElement {
     fontWeight?: string;
     // Common props
     scale?: number;
+    borderRadius?: string;
 }
 
 const FONTS = [
@@ -101,6 +102,7 @@ export default function ConfiguratorClient() {
     const bgFileInputRef = useRef<HTMLInputElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
     const modelViewerRef = useRef<any>(null);
+    const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
     // Calcul preț simplist pt demo
     const calculatePrice = () => {
@@ -214,13 +216,21 @@ export default function ConfiguratorClient() {
         setElements(elements.map(el => el.id === id ? { ...el, content: newText } : el));
     };
 
-    const handleWheel = (e: React.WheelEvent) => {
-        if (e.ctrlKey) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            setZoom(prev => Math.min(Math.max(0.5, prev + delta), 3));
-        }
-    };
+    useEffect(() => {
+        const container = workspaceContainerRef.current;
+        if (!container) return;
+
+        const onWheel = (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                setZoom(prev => Math.min(Math.max(0.5, prev + delta), 3));
+            }
+        };
+
+        container.addEventListener('wheel', onWheel, { passive: false });
+        return () => container.removeEventListener('wheel', onWheel);
+    }, [zoom]);
 
     const updateElementStyle = (id: string, property: keyof ConfigElement, value: any) => {
         setElements(elements.map(el => el.id === id ? { ...el, [property]: value } : el));
@@ -283,6 +293,13 @@ export default function ConfiguratorClient() {
                     const imgW = 200 * scale;
                     const imgRatio = img.width / img.height;
                     const dh = imgW / imgRatio;
+
+                    if (el.borderRadius === '50%') {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, Math.min(imgW, dh) / 2, 0, Math.PI * 2);
+                        ctx.clip();
+                    }
+
                     if (el.color) {
                         const tCanvas = document.createElement('canvas');
                         tCanvas.width = img.width; tCanvas.height = img.height;
@@ -1081,6 +1098,35 @@ export default function ConfiguratorClient() {
                                     </div>
                                 </div>
 
+                                {/* Formă Imagine (Circle/Square) */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => updateElementStyle(el.id, 'borderRadius', '0')}
+                                            style={{
+                                                flex: 1, padding: '0.5rem', borderRadius: '4px',
+                                                border: !el.borderRadius || el.borderRadius === '0' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                                background: !el.borderRadius || el.borderRadius === '0' ? 'var(--accent)' : 'white',
+                                                cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+                                            }}
+                                        >
+                                            Pătrat
+                                        </button>
+                                        <button
+                                            onClick={() => updateElementStyle(el.id, 'borderRadius', '50%')}
+                                            style={{
+                                                flex: 1, padding: '0.5rem', borderRadius: '4px',
+                                                border: el.borderRadius === '50%' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                                background: el.borderRadius === '50%' ? 'var(--accent)' : 'white',
+                                                cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+                                            }}
+                                        >
+                                            Cerc
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
                                     Sfat: Poți trage elementul oriunde în spațiul de lucru.
                                 </div>
@@ -1102,8 +1148,8 @@ export default function ConfiguratorClient() {
 
             {/* Main Canvas Area */}
             <main
+                ref={workspaceContainerRef}
                 onClick={() => { setSelectedId(null); setActiveTool(null); }}
-                onWheel={handleWheel}
                 style={{
                     flex: 1,
                     background: '#f1f5f9',
@@ -1270,13 +1316,20 @@ export default function ConfiguratorClient() {
                                                 WebkitMaskSize: 'contain', maskSize: 'contain',
                                                 WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
                                                 WebkitMaskPosition: 'center', maskPosition: 'center',
+                                                borderRadius: el.borderRadius || '0'
                                             }} />
                                         ) : (
                                             <img
                                                 src={el.content}
                                                 alt="uploaded"
                                                 draggable="false"
-                                                style={{ maxWidth: '300px', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
+                                                style={{
+                                                    maxWidth: '300px',
+                                                    display: 'block',
+                                                    pointerEvents: 'none',
+                                                    userSelect: 'none',
+                                                    borderRadius: el.borderRadius || '0'
+                                                }}
                                             />
                                         )
                                     )}
