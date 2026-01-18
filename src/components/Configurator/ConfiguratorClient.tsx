@@ -1453,7 +1453,7 @@ export default function ConfiguratorClient() {
                                                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
                                                 onPointerDown={(e) => e.stopPropagation()}
                                                 style={{
-                                                    position: 'absolute', top: -20, right: -20, width: 24, height: 24,
+                                                    position: 'absolute', top: isMobile ? -25 : -20, right: isMobile ? -25 : -20, width: isMobile ? 32 : 24, height: isMobile ? 32 : 24,
                                                     borderRadius: '50%', background: '#ef4444', color: 'white',
                                                     border: '2px solid white', display: 'flex', alignItems: 'center',
                                                     justifyContent: 'center', cursor: 'pointer', zIndex: 110,
@@ -1816,6 +1816,7 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
 
 
 
