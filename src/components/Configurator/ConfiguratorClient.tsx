@@ -22,6 +22,8 @@ import { ZoomControls } from './ZoomControls';
 import { ContextMenu } from './ContextMenu';
 import { Workspace } from './Workspace';
 import { MobileNav } from './MobileNav';
+import { useLibrarySearch } from './useLibrarySearch';
+import { use3DPreview } from './use3DPreview';
 import { ConfigElement, FONTS } from './Configurator.types';
 
 
@@ -49,24 +51,28 @@ export default function ConfiguratorClient() {
     const [activeTool, setActiveTool] = useState<string | null>(null);
     const [activeLibraryCategory, setActiveLibraryCategory] = useState<LibraryCategory>('masini');
     const [selectedId, setSelectedId] = useState<string | null>(null);
-
-    // Pixabay Search State
-    const [pixabayQuery, setPixabayQuery] = useState('');
-    const [pixabayResults, setPixabayResults] = useState<any[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [pixabayTransparent, setPixabayTransparent] = useState(false);
-    const [pixabayOrientation, setPixabayOrientation] = useState<string>('all');
-    const [pixabayPage, setPixabayPage] = useState(1);
     const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-    const [pixabayError, setPixabayError] = useState<string | null>(null);
 
-    // Vector Search State
-    const [vectorQuery, setVectorQuery] = useState('');
-    const [vectorResults, setVectorResults] = useState<any[]>([]);
-    const [isSearchingVectors, setIsSearchingVectors] = useState(false);
-    const [vectorPage, setVectorPage] = useState(1);
-    const [vectorError, setVectorError] = useState<string | null>(null);
     const [showMobileSettings, setShowMobileSettings] = useState(false);
+
+    const {
+        pixabayQuery, setPixabayQuery,
+        pixabayResults, isSearching,
+        pixabayTransparent, setPixabayTransparent,
+        pixabayOrientation, setPixabayOrientation,
+        pixabayPage, setPixabayPage,
+        pixabayError,
+        vectorQuery, setVectorQuery,
+        vectorResults, isSearchingVectors,
+        vectorPage, setVectorPage,
+        vectorError,
+        activeLibraryCategory, setActiveLibraryCategory,
+        performPixabaySearch,
+        handleVectorSearch,
+        handleLoadMoreVectors,
+        handleLoadMore,
+        handlePixabaySearch
+    } = useLibrarySearch(activeTool);
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean, elementId: string | null }>({
