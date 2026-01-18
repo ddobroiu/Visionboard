@@ -707,7 +707,7 @@ export default function ConfiguratorClient() {
                     </>
                 )}
 
-                {activeTool === 'elements'{activeTool === 'upload' && (
+                {activeTool === 'elements' && (
                     <>
                         <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Elemente & Forme</h3>
 
@@ -1811,6 +1811,7 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
 
 
 
