@@ -228,6 +228,8 @@ export default function ConfiguratorClient() {
                     savedDesigns={savedDesigns}
                     isLoadingSaved={isLoadingSaved}
                     fetchDesigns={fetchDesigns}
+                    setActiveTool={setActiveTool}
+                    setSelectedId={setSelectedId}
                 />
 
                 {selectedId && (
@@ -237,6 +239,7 @@ export default function ConfiguratorClient() {
                         elements={elements}
                         updateElementStyle={updateElementStyle}
                         setSelectedId={setSelectedId}
+                        setActiveTool={setActiveTool}
                         deleteElement={deleteElement}
                     />
                 )}
@@ -252,6 +255,7 @@ export default function ConfiguratorClient() {
                 selectedId={selectedId}
                 setSelectedId={setSelectedId}
                 setActiveTool={setActiveTool}
+                activeTool={activeTool}
                 handleDragEnd={handleDragEnd}
                 handleContextMenu={handleContextMenu}
                 updateElementStyle={updateElementStyle}

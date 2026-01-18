@@ -15,6 +15,7 @@ interface WorkspaceProps {
     selectedId: string | null;
     setSelectedId: (id: string | null) => void;
     setActiveTool: (tool: string | null) => void;
+    activeTool: string | null;
     handleDragEnd: (id: string, info: any) => void;
     handleContextMenu: (e: React.MouseEvent, id: string) => void;
     updateElementStyle: (id: string, property: keyof ConfigElement, value: any) => void;
@@ -38,6 +39,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
     selectedId,
     setSelectedId,
     setActiveTool,
+    activeTool,
     handleDragEnd,
     handleContextMenu,
     updateElementStyle,
@@ -49,6 +51,8 @@ export const Workspace: React.FC<WorkspaceProps> = ({
     update3DTexture,
     workspaceContainerRef
 }) => {
+    const isPanelOpen = !!(activeTool || selectedId);
+
     return (
         <main
             ref={workspaceContainerRef}
@@ -64,6 +68,9 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                 overflow: 'auto',
                 padding: isMobile ? '1rem' : '100px',
                 paddingLeft: isMobile ? 0 : '400px',
+                // Space for bottom nav and fixed drawer on mobile
+                paddingBottom: (isMobile && isPanelOpen) ? 'calc(50vh + 80px)' : (isMobile ? '80px' : '100px'),
+                transition: 'padding 0.3s ease'
             }}
         >
             <ZoomControls zoom={zoom} setZoom={setZoom} isMobile={isMobile} />

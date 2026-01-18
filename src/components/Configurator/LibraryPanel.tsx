@@ -41,6 +41,8 @@ interface LibraryPanelProps {
     savedDesigns: any[];
     isLoadingSaved: boolean;
     fetchDesigns: (isPublic?: boolean) => void;
+    setActiveTool: (tool: string | null) => void;
+    setSelectedId: (id: string | null) => void;
 }
 
 export const LibraryPanel: React.FC<LibraryPanelProps> = ({
@@ -78,9 +80,36 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
     setPixabayPage,
     savedDesigns,
     isLoadingSaved,
-    fetchDesigns
+    fetchDesigns,
+    setActiveTool,
+    setSelectedId
 }) => {
     const [templateTab, setTemplateTab] = React.useState<'official' | 'saved'>('official');
+
+    const handleClose = () => {
+        setActiveTool(null);
+        setSelectedId(null);
+    };
+
+    const renderHeader = (title: string) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 600 }}>{title}</h3>
+            <button
+                onClick={handleClose}
+                className="mobile-close-btn"
+                style={{
+                    border: 'none',
+                    background: '#f1f5f9',
+                    padding: '0.5rem',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    color: '#64748b'
+                }}
+            >
+                <X size={20} />
+            </button>
+        </div>
+    );
 
     React.useEffect(() => {
         if (activeTool === 'templates' && templateTab === 'saved') {
@@ -95,7 +124,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
         <>
             {activeTool === 'upload' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Încărcare Imagini</h3>
+                    {renderHeader('Încărcare Imagini')}
                     <button className="tool-btn-full" onClick={handleUploadClick}>
                         <Upload size={20} />
                         <span>Încarcă Imagine Nouă</span>
@@ -103,7 +132,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
                     <div style={{ paddingBottom: '1rem', fontWeight: 600, fontSize: '0.9rem' }}>Imaginile tale ({uploadedImages.length})</div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
+                    <div className="library-grid hide-scrollbar">
                         {uploadedImages.length > 0 ? (
                             uploadedImages.map((url, i) => (
                                 <button
@@ -126,7 +155,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
             {activeTool === 'templates' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele de Design</h3>
+                    {renderHeader('Modele de Design')}
 
                     <div className="tab-switcher" style={{ marginBottom: '1.5rem' }}>
                         <button
@@ -195,7 +224,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
             {activeTool === 'elements' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Elemente & Forme</h3>
+                    {renderHeader('Elemente & Forme')}
 
                     <form onSubmit={handleVectorSearch} className="search-form">
                         <input
@@ -227,7 +256,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                         ))}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', overflowY: 'auto', flex: 1, paddingBottom: '1rem' }} className="hide-scrollbar">
+                    <div className="library-grid hide-scrollbar">
                         {vectorResults.map(hit => (
                             <button
                                 key={hit.id}
@@ -261,7 +290,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
             {activeTool === 'bg' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
+                    {renderHeader('Imagine & Culoare Fundal')}
 
                     <div style={{ marginBottom: '1.5rem' }}>
                         <label className="input-label">Imagine de Fundal</label>
@@ -312,7 +341,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
 
             {activeTool === 'library' && (
                 <>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
+                    {renderHeader('Stickere & Imagini')}
 
                     <form onSubmit={handlePixabaySearch} className="search-form">
                         <input
@@ -375,7 +404,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                         )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
+                    <div className="library-grid hide-scrollbar">
                         {pixabayResults.length > 0 ? (
                             <>
                                 {pixabayResults.map(hit => (
@@ -636,7 +665,61 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
                 /* For white active swatch, show black checkmark */
                 .color-swatch[title="#ffffff"].active::after { color: black; text-shadow: none; }
 
-                .toggle-btn {
+                .mobile-close-btn {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .library-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 0.75rem;
+                    overflow-y: auto;
+                    flex: 1;
+                    padding-bottom: 1rem;
+                }
+
+                @media (max-width: 768px) {
+                    .mobile-close-btn {
+                        display: flex;
+                    }
+                    .library-grid {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                    }
+                    .color-swatches-grid {
+                        grid-template-columns: repeat(4, 1fr) !important;
+                    }
+                }
+
+                .chip-container {
+                    display: flex;
+                    gap: 0.5rem;
+                    overflow-x: auto;
+                    padding: 0.5rem 0;
+                    margin-bottom: 1rem;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .chip-container::-webkit-scrollbar {
+                    display: none;
+                }
+                .chip {
+                    padding: 0.5rem 1rem;
+                    background: #f1f5f9;
+                    border: 1px solid var(--border);
+                    border-radius: 99px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .chip.active {
+                    background: var(--primary);
+                    color: white;
+                    border-color: var(--primary);
+                }
                     display: flex;
                     align-items: center;
                     gap: 0.5rem;

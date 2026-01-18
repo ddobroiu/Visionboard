@@ -1,5 +1,5 @@
 import React from 'react';
-import { Square, Circle, Heart, Hexagon, Star, Image as ImageIcon } from 'lucide-react';
+import { Square, Circle, Heart, Hexagon, Star, Image as ImageIcon, X } from 'lucide-react';
 import { ConfigElement, FONTS } from './Configurator.types';
 
 interface PropertiesPanelProps {
@@ -8,7 +8,8 @@ interface PropertiesPanelProps {
     elements: ConfigElement[];
     updateElementStyle: (id: string, property: keyof ConfigElement, value: any) => void;
     setSelectedId: (id: string | null) => void;
-    deleteElement: (id: string) => void; // Optional if we want delete button here
+    deleteElement: (id: string) => void;
+    setActiveTool: (tool: string | null) => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
@@ -17,7 +18,33 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     elements,
     updateElementStyle,
     setSelectedId,
+    setActiveTool
 }) => {
+
+    const handleClose = () => {
+        setActiveTool(null);
+        setSelectedId(null);
+    };
+
+    const renderHeader = (title: string) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', margin: 0, fontWeight: 600 }}>{title}</h3>
+            <button
+                onClick={handleClose}
+                className="mobile-close-btn"
+                style={{
+                    border: 'none',
+                    background: '#f1f5f9',
+                    padding: '0.5rem',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    color: '#64748b'
+                }}
+            >
+                <X size={20} />
+            </button>
+        </div>
+    );
 
     // Helper to find selected element
     const el = selectedId ? elements.find(e => e.id === selectedId) : null;
@@ -32,12 +59,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
+        overflowY: 'auto',
+        flex: 1
     };
 
     if (activeTool === 'edit-text' && el.type === 'text') {
         return (
             <div style={panelStyle}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
+                {renderHeader('Editare Text')}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {/* Culoare */}
                     <div>
@@ -216,7 +245,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (activeTool === 'edit-image' && el.type === 'image') {
         return (
             <div style={panelStyle}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Imagine</h3>
+                {renderHeader('Editare Imagine')}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                     {/* Size */}
@@ -447,5 +476,22 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         );
     }
 
-    return null;
+    return (
+        <>
+            <style>{`
+                .mobile-close-btn {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                @media (max-width: 768px) {
+                    .mobile-close-btn {
+                        display: flex;
+                    }
+                }
+            `}</style>
+            {null}
+        </>
+    );
 };
