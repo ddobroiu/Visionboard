@@ -149,9 +149,9 @@ export default function ConfiguratorClient() {
             reader.onload = (event) => {
                 const url = event.target?.result as string;
                 setUploadedImages(prev => [url, ...prev]);
-                setActiveLibraryCategory('incarcate' as any);
+                
                 setPixabayResults([]); // Close search results to show uploads
-                setActiveTool('library'); // Open library to show the upload
+                setActiveTool('upload'); // Open library to show the upload
             };
             reader.readAsDataURL(file);
         }
@@ -575,7 +575,7 @@ export default function ConfiguratorClient() {
         background: 'var(--surface)',
         padding: '1rem',
         zIndex: 19,
-        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload') ? 'flex' : 'none',
         flexDirection: 'column',
         boxShadow: '0 -5px 15px -3px rgba(0,0,0,0.1)',
         borderTopLeftRadius: '16px',
@@ -590,7 +590,7 @@ export default function ConfiguratorClient() {
         background: 'var(--surface)',
         padding: '1rem',
         zIndex: 9,
-        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
+        display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates' || activeTool === 'upload') ? 'flex' : 'none',
         flexDirection: 'column',
         boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
     };
@@ -616,7 +616,7 @@ export default function ConfiguratorClient() {
 
             {/* Sidebar Tools */}
             <aside style={sidebarStyle}>
-                <button className={`tool-btn ${activeTool === 'upload' ? 'active' : ''}`} title="Upload Image" onClick={handleUploadClick}>
+                <button className={`tool-btn ${activeTool === 'upload' ? 'active' : ''}`} title="Upload Image" onClick={() => setActiveTool(activeTool === 'upload' ? null : 'upload')}>
                     <Upload size={24} />
                     <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Upload</span>
                 </button>
@@ -954,22 +954,7 @@ export default function ConfiguratorClient() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-                            <button
-                                onClick={() => setActiveLibraryCategory('incarcate' as any)}
-                                style={{
-                                    padding: '0.4rem 0.8rem',
-                                    borderRadius: '99px',
-                                    border: '1px solid var(--border)',
-                                    background: activeLibraryCategory === ('incarcate' as any) ? 'var(--primary)' : 'white',
-                                    color: activeLibraryCategory === ('incarcate' as any) ? 'white' : 'var(--foreground)',
-                                    fontSize: '0.8rem',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    fontWeight: activeLibraryCategory === ('incarcate' as any) ? 700 : 400
-                                }}
-                            >
-                                Încărcate ({uploadedImages.length})
-                            </button>
+                            
                             {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
                                 <button
                                     key={cat}
@@ -1014,32 +999,7 @@ export default function ConfiguratorClient() {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
-                            {(activeLibraryCategory as any) === 'incarcate' ? (
-                                uploadedImages.length > 0 ? (
-                                    uploadedImages.map((url, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => addElement('image', url)}
-                                            style={{
-                                                border: '1px solid var(--border)',
-                                                borderRadius: '0.5rem',
-                                                overflow: 'hidden',
-                                                background: 'white',
-                                                cursor: 'pointer',
-                                                height: '100px',
-                                                position: 'relative'
-                                            }}
-                                            className="hover:shadow-md transition-shadow"
-                                        >
-                                            <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </button>
-                                    ))
-                                ) : (
-                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                        Nu ai încărcat nicio poză încă.
-                                    </div>
-                                )
-                            ) : pixabayResults.length > 0 ? (
+                            pixabayResults.length > 0 ? (
                                 <>
                                     {pixabayResults.map(hit => (
                                         <button
@@ -1816,6 +1776,7 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
 
 
 
