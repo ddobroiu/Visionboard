@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import {
@@ -106,8 +106,9 @@ export default function ConfiguratorClient() {
     const canvasRef = useRef<HTMLDivElement>(null);
     const modelViewerRef = useRef<any>(null);
     const workspaceContainerRef = useRef<HTMLDivElement>(null);
+    const rotationCenterRef = useRef<{ x: number, y: number } | null>(null);
 
-    // Calcul preț simplist pt demo
+    // Calcul preÈ› simplist pt demo
     const calculatePrice = () => {
         let base = 100;
         if (material === 'forex') base += 20;
@@ -494,14 +495,14 @@ export default function ConfiguratorClient() {
 
             if (data.hits) {
                 if (data.hits.length === 0 && isLoadMore) {
-                    errorSetter("Nu mai sunt rezultate de afișat.");
+                    errorSetter("Nu mai sunt rezultate de afiÈ™at.");
                 } else {
                     if (isLoadMore) {
                         setter(prev => [...prev, ...data.hits]);
                     } else {
                         setter(data.hits);
                         if (data.hits.length === 0) {
-                            errorSetter(`Nu am găsit rezultate pentru "${query}"`);
+                            errorSetter(`Nu am gÄƒsit rezultate pentru "${query}"`);
                         }
                     }
                 }
@@ -578,7 +579,7 @@ export default function ConfiguratorClient() {
                 </button>
                 <button className={`tool-btn ${activeTool === 'library' ? 'active' : ''}`} title="Library" onClick={() => setActiveTool(activeTool === 'library' ? null : 'library')}>
                     <LayoutGrid size={24} />
-                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Bibliotecă</span>
+                    <span style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>BibliotecÄƒ</span>
                 </button>
                 <button className={`tool-btn ${activeTool === 'elements' ? 'active' : ''}`} title="Elements" onClick={() => setActiveTool(activeTool === 'elements' ? null : 'elements')}>
                     <Sparkles size={24} />
@@ -587,127 +588,440 @@ export default function ConfiguratorClient() {
             </aside>
 
             {/* Tool Panel (for Background, Library, Elements, Templates) */}
-            {(activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') && (
-                <div style={{ width: '300px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9, display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+                position: 'absolute',
+                left: '80px',
+                top: 0,
+                bottom: 0,
+                width: '300px',
+                borderRight: '1px solid var(--border)',
+                background: 'var(--surface)',
+                padding: '1rem',
+                zIndex: 9,
+                display: (activeTool === 'bg' || activeTool === 'library' || activeTool === 'elements' || activeTool === 'templates') ? 'flex' : 'none',
+                flexDirection: 'column',
+                boxShadow: '10px 0 15px -3px rgba(0,0,0,0.05)'
+            }}>
 
-                    {activeTool === 'templates' && (
-                        <>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
-                                {VISION_TEMPLATES.map(t => (
-                                    <button
-                                        key={t.id}
-                                        onClick={() => loadTemplate(t)}
-                                        style={{
-                                            border: '1px solid var(--border)', background: 'white', padding: '0.5rem', cursor: 'pointer', borderRadius: '12px',
-                                            overflow: 'hidden', textAlign: 'left', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '8px'
-                                        }}
-                                        className="hover:border-primary hover:shadow-md"
-                                    >
-                                        <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden' }}>
-                                            <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>{t.name}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.description}</div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {activeTool === 'elements' && (
-                        <>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Elemente & Forme</h3>
-
-                            {/* Vector Search Bar */}
-                            <form onSubmit={handleVectorSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                <input
-                                    type="text"
-                                    value={vectorQuery}
-                                    onChange={(e) => setVectorQuery(e.target.value)}
-                                    placeholder="Caută elemente (ex: flori, linii)..."
+                {activeTool === 'templates' && (
+                    <>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Modele Ready-to-Use</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '1rem', overflowY: 'auto', flex: 1 }} className="hide-scrollbar">
+                            {VISION_TEMPLATES.map(t => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => loadTemplate(t)}
                                     style={{
-                                        flex: 1,
-                                        padding: '0.6rem',
+                                        border: '1px solid var(--border)', background: 'white', padding: '0.5rem', cursor: 'pointer', borderRadius: '12px',
+                                        overflow: 'hidden', textAlign: 'left', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '8px'
+                                    }}
+                                    className="hover:border-primary hover:shadow-md"
+                                >
+                                    <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <img src={t.thumbnail} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--foreground)' }}>{t.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.description}</div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {activeTool === 'elements' && (
+                    <>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Elemente & Forme</h3>
+
+                        {/* Vector Search Bar */}
+                        <form onSubmit={handleVectorSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            <input
+                                type="text"
+                                value={vectorQuery}
+                                onChange={(e) => setVectorQuery(e.target.value)}
+                                placeholder="CautÄƒ elemente (ex: flori, linii)..."
+                                style={{
+                                    flex: 1,
+                                    padding: '0.6rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border)',
+                                    background: 'white',
+                                    fontSize: '0.875rem'
+                                }}
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSearchingVectors}
+                                style={{
+                                    padding: '0.6rem 1rem',
+                                    borderRadius: '8px',
+                                    background: 'var(--primary)',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600
+                                }}
+                            >
+                                {isSearchingVectors ? '...' : 'CautÄƒ'}
+                            </button>
+                        </form>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
+                            {['forme', 'linii', 'flori', 'abstract', 'nature'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => {
+                                        const query = cat.charAt(0).toUpperCase() + cat.slice(1);
+                                        setVectorQuery(query);
+                                        setVectorPage(1);
+                                        performPixabaySearch(query, false, 1, 'vector');
+                                    }}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '99px',
+                                        border: '1px solid var(--border)',
+                                        background: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
+                                        color: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
+                                        fontSize: '0.8rem',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', overflowY: 'auto', flex: 1, paddingBottom: '1rem' }} className="hide-scrollbar">
+                            {/* Search Results (Vectors from Pixabay) */}
+                            {vectorResults.map(hit => (
+                                <button
+                                    key={hit.id}
+                                    onClick={() => addElement('image', hit.url)}
+                                    style={{
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0.5rem',
+                                        overflow: 'hidden',
+                                        background: 'white',
+                                        cursor: 'pointer',
+                                        height: '80px',
+                                        position: 'relative'
+                                    }}
+                                    className="hover:shadow-md transition-shadow"
+                                >
+                                    <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
+                                </button>
+                            ))}
+
+                            {vectorResults.length > 0 && (
+                                <button
+                                    onClick={handleLoadMoreVectors}
+                                    disabled={isSearchingVectors}
+                                    style={{
+                                        gridColumn: 'span 3',
+                                        padding: '0.75rem',
+                                        marginTop: '0.5rem',
                                         borderRadius: '8px',
                                         border: '1px solid var(--border)',
                                         background: 'white',
-                                        fontSize: '0.875rem'
-                                    }}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSearchingVectors}
-                                    style={{
-                                        padding: '0.6rem 1rem',
-                                        borderRadius: '8px',
-                                        background: 'var(--primary)',
-                                        color: 'white',
-                                        border: 'none',
+                                        color: 'var(--primary)',
+                                        fontWeight: 600,
                                         cursor: 'pointer',
                                         fontSize: '0.875rem',
-                                        fontWeight: 600
+                                        marginBottom: '1rem'
                                     }}
                                 >
-                                    {isSearchingVectors ? '...' : 'Caută'}
+                                    {isSearchingVectors ? 'Se Ã®ncarcÄƒ...' : 'ÃŽncarcÄƒ mai multe elemente'}
                                 </button>
-                            </form>
+                            )}
 
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-                                {['forme', 'linii', 'flori', 'abstract', 'nature'].map(cat => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => {
-                                            const query = cat.charAt(0).toUpperCase() + cat.slice(1);
-                                            setVectorQuery(query);
-                                            setVectorPage(1);
-                                            performPixabaySearch(query, false, 1, 'vector');
-                                        }}
-                                        style={{
-                                            padding: '0.4rem 0.8rem',
-                                            borderRadius: '99px',
-                                            border: '1px solid var(--border)',
-                                            background: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
-                                            color: vectorQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
-                                            fontSize: '0.8rem',
-                                            cursor: 'pointer',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                    </button>
-                                ))}
+                            {vectorError && (
+                                <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '1rem', color: 'var(--secondary-foreground)', opacity: 0.6, fontSize: '0.8rem' }}>
+                                    {vectorError}
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+                {activeTool === 'bg' && (
+                    <>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Imagine de Fundal</label>
+                            <button
+                                onClick={handleBgUploadClick}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    borderRadius: '8px',
+                                    border: '2px dashed var(--border)',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.875rem',
+                                    color: 'var(--primary)',
+                                    fontWeight: 600
+                                }}
+                                className="hover:border-primary transition-colors"
+                            >
+                                <Upload size={18} /> ÃŽncarcÄƒ PozÄƒ de Fundal
+                            </button>
+                            {!background.startsWith('#') && (
+                                <button
+                                    onClick={() => setBackground('#ffffff')}
+                                    style={{
+                                        width: '100%',
+                                        marginTop: '0.75rem',
+                                        padding: '0.6rem',
+                                        fontSize: '0.8rem',
+                                        color: 'white',
+                                        background: '#ef4444',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem'
+                                    }}
+                                    className="hover:bg-red-600 transition-colors"
+                                >
+                                    <X size={14} /> EliminÄƒ Imaginea de Fundal
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ marginBottom: '0.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Sau alege o culoare</label>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            <input
+                                type="color"
+                                value={background.startsWith('#') ? background : '#ffffff'}
+                                onChange={(e) => setBackground(e.target.value)}
+                                style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
+                            />
+                            <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
+                                {background.startsWith('#') ? background.toUpperCase() : 'IMAGINE'}
                             </div>
+                        </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', overflowY: 'auto', flex: 1, paddingBottom: '1rem' }} className="hide-scrollbar">
-                                {/* Search Results (Vectors from Pixabay) */}
-                                {vectorResults.map(hit => (
-                                    <button
-                                        key={hit.id}
-                                        onClick={() => addElement('image', hit.url)}
-                                        style={{
-                                            border: '1px solid var(--border)',
-                                            borderRadius: '0.5rem',
-                                            overflow: 'hidden',
-                                            background: 'white',
-                                            cursor: 'pointer',
-                                            height: '80px',
-                                            position: 'relative'
-                                        }}
-                                        className="hover:shadow-md transition-shadow"
-                                    >
-                                        <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '5px' }} />
-                                    </button>
-                                ))}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                            {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
+                                <button
+                                    key={color}
+                                    onClick={() => setBackground(color)}
+                                    style={{
+                                        width: '32px', height: '32px', borderRadius: '50%',
+                                        background: color, border: '1px solid var(--border)',
+                                        cursor: 'pointer',
+                                        boxShadow: background === color ? '0 0 0 2px var(--primary)' : 'none'
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
 
-                                {vectorResults.length > 0 && (
+                {activeTool === 'library' && (
+                    <>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
+
+                        {/* Pixabay Search Bar */}
+                        <form onSubmit={handlePixabaySearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            <input
+                                type="text"
+                                value={pixabayQuery}
+                                onChange={(e) => setPixabayQuery(e.target.value)}
+                                placeholder="CautÄƒ Ã®n Pixabay..."
+                                style={{
+                                    flex: 1,
+                                    padding: '0.6rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border)',
+                                    background: 'white',
+                                    fontSize: '0.875rem'
+                                }}
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSearching}
+                                style={{
+                                    padding: '0.6rem 1rem',
+                                    borderRadius: '8px',
+                                    background: 'var(--primary)',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600
+                                }}
+                            >
+                                {isSearching ? '...' : 'CautÄƒ'}
+                            </button>
+                        </form>
+
+                        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.875rem',
+                                cursor: 'pointer',
+                                padding: '0.4rem 0.8rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                background: pixabayTransparent ? 'var(--accent)' : 'white',
+                                color: pixabayTransparent ? 'var(--primary)' : 'var(--foreground)',
+                                fontWeight: pixabayTransparent ? 700 : 400,
+                                transition: 'all 0.2s'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={pixabayTransparent}
+                                    onChange={(e) => setPixabayTransparent(e.target.checked)}
+                                    style={{ accentColor: 'var(--primary)' }}
+                                />
+                                <span>FÄƒrÄƒ fundal (PNG)</span>
+                            </label>
+
+                            <select
+                                value={pixabayOrientation}
+                                onChange={(e) => setPixabayOrientation(e.target.value)}
+                                style={{
+                                    padding: '0.4rem 0.6rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.8rem',
+                                    background: 'white',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="all">Toate</option>
+                                <option value="horizontal">Landscape</option>
+                                <option value="vertical">Portrait</option>
+                            </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
+                            <button
+                                onClick={() => setActiveLibraryCategory('incarcate' as any)}
+                                style={{
+                                    padding: '0.4rem 0.8rem',
+                                    borderRadius: '99px',
+                                    border: '1px solid var(--border)',
+                                    background: activeLibraryCategory === ('incarcate' as any) ? 'var(--primary)' : 'white',
+                                    color: activeLibraryCategory === ('incarcate' as any) ? 'white' : 'var(--foreground)',
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    fontWeight: activeLibraryCategory === ('incarcate' as any) ? 700 : 400
+                                }}
+                            >
+                                ÃŽncÄƒrcate ({uploadedImages.length})
+                            </button>
+                            {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => {
+                                        const query = cat.charAt(0).toUpperCase() + cat.slice(1);
+                                        setPixabayQuery(query);
+                                        setPixabayPage(1);
+                                        performPixabaySearch(query, false, 1);
+                                    }}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '99px',
+                                        border: '1px solid var(--border)',
+                                        background: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
+                                        color: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
+                                        fontSize: '0.8rem',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                </button>
+                            ))}
+                            {pixabayResults.length > 0 && (
+                                <button
+                                    onClick={() => setActiveLibraryCategory('search' as any)}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        borderRadius: '99px',
+                                        border: '1px solid var(--border)',
+                                        background: activeLibraryCategory === ('search' as any) ? 'var(--primary)' : 'white',
+                                        color: activeLibraryCategory === ('search' as any) ? 'white' : 'var(--foreground)',
+                                        fontSize: '0.8rem',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    Rezultate CÄƒutare
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
+                            {(activeLibraryCategory as any) === 'incarcate' ? (
+                                uploadedImages.length > 0 ? (
+                                    uploadedImages.map((url, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => addElement('image', url)}
+                                            style={{
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '0.5rem',
+                                                overflow: 'hidden',
+                                                background: 'white',
+                                                cursor: 'pointer',
+                                                height: '100px',
+                                                position: 'relative'
+                                            }}
+                                            className="hover:shadow-md transition-shadow"
+                                        >
+                                            <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                        Nu ai Ã®ncÄƒrcat nicio pozÄƒ Ã®ncÄƒ.
+                                    </div>
+                                )
+                            ) : pixabayResults.length > 0 ? (
+                                <>
+                                    {pixabayResults.map(hit => (
+                                        <button
+                                            key={hit.id}
+                                            onClick={() => addElement('image', hit.url)}
+                                            style={{
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '0.5rem',
+                                                overflow: 'hidden',
+                                                background: 'white',
+                                                cursor: 'pointer',
+                                                height: '100px',
+                                                position: 'relative'
+                                            }}
+                                            className="hover:shadow-md transition-shadow"
+                                        >
+                                            <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </button>
+                                    ))}
                                     <button
-                                        onClick={handleLoadMoreVectors}
-                                        disabled={isSearchingVectors}
+                                        onClick={handleLoadMore}
+                                        disabled={isSearching}
                                         style={{
-                                            gridColumn: 'span 3',
+                                            gridColumn: 'span 2',
                                             padding: '0.75rem',
                                             marginTop: '0.5rem',
                                             borderRadius: '8px',
@@ -720,327 +1034,24 @@ export default function ConfiguratorClient() {
                                             marginBottom: '1rem'
                                         }}
                                     >
-                                        {isSearchingVectors ? 'Se încarcă...' : 'Încarcă mai multe elemente'}
+                                        {isSearching ? 'Se Ã®ncarcÄƒ...' : 'ÃŽncarcÄƒ mai multe rezultate'}
                                     </button>
-                                )}
-
-                                {vectorError && (
-                                    <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '1rem', color: 'var(--secondary-foreground)', opacity: 0.6, fontSize: '0.8rem' }}>
-                                        {vectorError}
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
-                    {activeTool === 'bg' && (
-                        <>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Imagine & Culoare Fundal</h3>
-
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Imagine de Fundal</label>
-                                <button
-                                    onClick={handleBgUploadClick}
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '8px',
-                                        border: '2px dashed var(--border)',
-                                        background: 'white',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.5rem',
-                                        fontSize: '0.875rem',
-                                        color: 'var(--primary)',
-                                        fontWeight: 600
-                                    }}
-                                    className="hover:border-primary transition-colors"
-                                >
-                                    <Upload size={18} /> Încarcă Poză de Fundal
-                                </button>
-                                {!background.startsWith('#') && (
-                                    <button
-                                        onClick={() => setBackground('#ffffff')}
-                                        style={{
-                                            width: '100%',
-                                            marginTop: '0.75rem',
-                                            padding: '0.6rem',
-                                            fontSize: '0.8rem',
-                                            color: 'white',
-                                            background: '#ef4444',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontWeight: 600,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.5rem'
-                                        }}
-                                        className="hover:bg-red-600 transition-colors"
-                                    >
-                                        <X size={14} /> Elimină Imaginea de Fundal
-                                    </button>
-                                )}
-                            </div>
-
-                            <div style={{ marginBottom: '0.5rem' }}>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Sau alege o culoare</label>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                <input
-                                    type="color"
-                                    value={background.startsWith('#') ? background : '#ffffff'}
-                                    onChange={(e) => setBackground(e.target.value)}
-                                    style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer', borderRadius: '4px', overflow: 'hidden' }}
-                                />
-                                <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'white' }}>
-                                    {background.startsWith('#') ? background.toUpperCase() : 'IMAGINE'}
+                                </>
+                            ) : (
+                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
+                                    {pixabayError || (pixabayQuery ? `Nu am gÄƒsit rezultate pentru "${pixabayQuery}"` : "CÄƒutaÈ›i sau selectaÈ›i o categorie.")}
                                 </div>
-                            </div>
+                            )}
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                                {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#fee2e2', '#fecaca', '#fef3c7', '#dcfce7', '#dbeafe', '#e0e7ff', '#fae8ff', '#f3e8ff', '#000000', '#1e293b'].map(color => (
-                                    <button
-                                        key={color}
-                                        onClick={() => setBackground(color)}
-                                        style={{
-                                            width: '32px', height: '32px', borderRadius: '50%',
-                                            background: color, border: '1px solid var(--border)',
-                                            cursor: 'pointer',
-                                            boxShadow: background === color ? '0 0 0 2px var(--primary)' : 'none'
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {activeTool === 'library' && (
-                        <>
-                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Stickere & Imagini</h3>
-
-                            {/* Pixabay Search Bar */}
-                            <form onSubmit={handlePixabaySearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                <input
-                                    type="text"
-                                    value={pixabayQuery}
-                                    onChange={(e) => setPixabayQuery(e.target.value)}
-                                    placeholder="Caută în Pixabay..."
-                                    style={{
-                                        flex: 1,
-                                        padding: '0.6rem',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border)',
-                                        background: 'white',
-                                        fontSize: '0.875rem'
-                                    }}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSearching}
-                                    style={{
-                                        padding: '0.6rem 1rem',
-                                        borderRadius: '8px',
-                                        background: 'var(--primary)',
-                                        color: 'white',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {isSearching ? '...' : 'Caută'}
-                                </button>
-                            </form>
-
-                            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <label style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    fontSize: '0.875rem',
-                                    cursor: 'pointer',
-                                    padding: '0.4rem 0.8rem',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border)',
-                                    background: pixabayTransparent ? 'var(--accent)' : 'white',
-                                    color: pixabayTransparent ? 'var(--primary)' : 'var(--foreground)',
-                                    fontWeight: pixabayTransparent ? 700 : 400,
-                                    transition: 'all 0.2s'
-                                }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={pixabayTransparent}
-                                        onChange={(e) => setPixabayTransparent(e.target.checked)}
-                                        style={{ accentColor: 'var(--primary)' }}
-                                    />
-                                    <span>Fără fundal (PNG)</span>
-                                </label>
-
-                                <select
-                                    value={pixabayOrientation}
-                                    onChange={(e) => setPixabayOrientation(e.target.value)}
-                                    style={{
-                                        padding: '0.4rem 0.6rem',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border)',
-                                        fontSize: '0.8rem',
-                                        background: 'white',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    <option value="all">Toate</option>
-                                    <option value="horizontal">Landscape</option>
-                                    <option value="vertical">Portrait</option>
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }} className="hide-scrollbar">
-                                <button
-                                    onClick={() => setActiveLibraryCategory('incarcate' as any)}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        borderRadius: '99px',
-                                        border: '1px solid var(--border)',
-                                        background: activeLibraryCategory === ('incarcate' as any) ? 'var(--primary)' : 'white',
-                                        color: activeLibraryCategory === ('incarcate' as any) ? 'white' : 'var(--foreground)',
-                                        fontSize: '0.8rem',
-                                        cursor: 'pointer',
-                                        whiteSpace: 'nowrap',
-                                        fontWeight: activeLibraryCategory === ('incarcate' as any) ? 700 : 400
-                                    }}
-                                >
-                                    Încărcate ({uploadedImages.length})
-                                </button>
-                                {['masini', 'familie', 'bani', 'travel', 'citate'].map(cat => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => {
-                                            const query = cat.charAt(0).toUpperCase() + cat.slice(1);
-                                            setPixabayQuery(query);
-                                            setPixabayPage(1);
-                                            performPixabaySearch(query, false, 1);
-                                        }}
-                                        style={{
-                                            padding: '0.4rem 0.8rem',
-                                            borderRadius: '99px',
-                                            border: '1px solid var(--border)',
-                                            background: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'var(--primary)' : 'white',
-                                            color: pixabayQuery.toLowerCase() === cat.toLowerCase() ? 'white' : 'var(--foreground)',
-                                            fontSize: '0.8rem',
-                                            cursor: 'pointer',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                    </button>
-                                ))}
-                                {pixabayResults.length > 0 && (
-                                    <button
-                                        onClick={() => setActiveLibraryCategory('search' as any)}
-                                        style={{
-                                            padding: '0.4rem 0.8rem',
-                                            borderRadius: '99px',
-                                            border: '1px solid var(--border)',
-                                            background: activeLibraryCategory === ('search' as any) ? 'var(--primary)' : 'white',
-                                            color: activeLibraryCategory === ('search' as any) ? 'white' : 'var(--foreground)',
-                                            fontSize: '0.8rem',
-                                            cursor: 'pointer',
-                                            whiteSpace: 'nowrap',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        Rezultate Căutare
-                                    </button>
-                                )}
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
-                                {(activeLibraryCategory as any) === 'incarcate' ? (
-                                    uploadedImages.length > 0 ? (
-                                        uploadedImages.map((url, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => addElement('image', url)}
-                                                style={{
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: '0.5rem',
-                                                    overflow: 'hidden',
-                                                    background: 'white',
-                                                    cursor: 'pointer',
-                                                    height: '100px',
-                                                    position: 'relative'
-                                                }}
-                                                className="hover:shadow-md transition-shadow"
-                                            >
-                                                <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            </button>
-                                        ))
-                                    ) : (
-                                        <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                            Nu ai încărcat nicio poză încă.
-                                        </div>
-                                    )
-                                ) : pixabayResults.length > 0 ? (
-                                    <>
-                                        {pixabayResults.map(hit => (
-                                            <button
-                                                key={hit.id}
-                                                onClick={() => addElement('image', hit.url)}
-                                                style={{
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: '0.5rem',
-                                                    overflow: 'hidden',
-                                                    background: 'white',
-                                                    cursor: 'pointer',
-                                                    height: '100px',
-                                                    position: 'relative'
-                                                }}
-                                                className="hover:shadow-md transition-shadow"
-                                            >
-                                                <img src={hit.preview} alt={hit.tags} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            </button>
-                                        ))}
-                                        <button
-                                            onClick={handleLoadMore}
-                                            disabled={isSearching}
-                                            style={{
-                                                gridColumn: 'span 2',
-                                                padding: '0.75rem',
-                                                marginTop: '0.5rem',
-                                                borderRadius: '8px',
-                                                border: '1px solid var(--border)',
-                                                background: 'white',
-                                                color: 'var(--primary)',
-                                                fontWeight: 600,
-                                                cursor: 'pointer',
-                                                fontSize: '0.875rem',
-                                                marginBottom: '1rem'
-                                            }}
-                                        >
-                                            {isSearching ? 'Se încarcă...' : 'Încarcă mai multe rezultate'}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '2rem', color: 'var(--secondary-foreground)', opacity: 0.6 }}>
-                                        {pixabayError || (pixabayQuery ? `Nu am găsit rezultate pentru "${pixabayQuery}"` : "Căutați sau selectați o categorie.")}
-                                    </div>
-                                )}
-
-                                {pixabayError && pixabayResults.length > 0 && (
-                                    <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-                                        {pixabayError}
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-            )}
-
+                            {pixabayError && pixabayResults.length > 0 && (
+                                <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '1rem', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
+                                    {pixabayError}
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
             {/* Text Edit Panel (Activates when text selected or tool active) */}
             {activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text' && (
                 <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
@@ -1068,7 +1079,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Text Scale / Zoom */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărește / Micșorează Text: {Math.round((el.scale || 1) * 100)}%</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒreÈ™te / MicÈ™oreazÄƒ Text: {Math.round((el.scale || 1) * 100)}%</label>
                                     <input
                                         type="range"
                                         min="0.5"
@@ -1082,7 +1093,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Font Size */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime Font Excată: {el.fontSize}px</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒrime Font ExcatÄƒ: {el.fontSize}px</label>
                                     <input
                                         type="range"
                                         min="12"
@@ -1109,7 +1120,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Rotation Slider */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>RotaÈ›ie: {el.rotation || 0}Â°</label>
                                     <input
                                         type="range"
                                         min="0"
@@ -1126,7 +1137,7 @@ export default function ConfiguratorClient() {
                                     onClick={() => setSelectedId(null)}
                                     style={{ marginTop: '1rem', fontSize: '0.8rem' }}
                                 >
-                                    Închide Editarea
+                                    ÃŽnchide Editarea
                                 </button>
                             </div>
                         );
@@ -1143,9 +1154,9 @@ export default function ConfiguratorClient() {
                         const el = elements.find(e => e.id === selectedId)!;
                         return (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                {/* Mărime (Scale) */}
+                                {/* MÄƒrime (Scale) */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>MÄƒrime (Scale): {Math.round((el.scale || 1) * 100)}%</label>
                                     <input
                                         type="range"
                                         min="0.1"
@@ -1159,7 +1170,7 @@ export default function ConfiguratorClient() {
 
                                 {/* Rotation Slider */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Rotație: {el.rotation || 0}°</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>RotaÈ›ie: {el.rotation || 0}Â°</label>
                                     <input
                                         type="range"
                                         min="0"
@@ -1215,18 +1226,18 @@ export default function ConfiguratorClient() {
                                         ))}
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                        * Sfat: Aplică o culoare pentru a crea o siluetă sau "ORIG" pentru culorile native.
+                                        * Sfat: AplicÄƒ o culoare pentru a crea o siluetÄƒ sau "ORIG" pentru culorile native.
                                     </div>
                                 </div>
 
-                                {/* Formă Imagine (Enhanced) */}
+                                {/* FormÄƒ Imagine (Enhanced) */}
                                 <div>
-                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Formă Imagine</label>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>FormÄƒ Imagine</label>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                                         {[
-                                            { id: 'rect', label: 'Pătrat', icon: <Square size={14} /> },
+                                            { id: 'rect', label: 'PÄƒtrat', icon: <Square size={14} /> },
                                             { id: 'circle', label: 'Cerc', icon: <Circle size={14} /> },
-                                            { id: 'heart', label: 'Inimă', icon: <Heart size={14} /> },
+                                            { id: 'heart', label: 'InimÄƒ', icon: <Heart size={14} /> },
                                             { id: 'hexagon', label: 'Hexagon', icon: <Hexagon size={14} /> },
                                             { id: 'star', label: 'Stea', icon: <Star size={14} /> }
                                         ].map(shape => (
@@ -1249,7 +1260,7 @@ export default function ConfiguratorClient() {
                                 </div>
 
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
-                                    Sfat: Poți trage elementul oriunde în spațiul de lucru.
+                                    Sfat: PoÈ›i trage elementul oriunde Ã®n spaÈ›iul de lucru.
                                 </div>
 
                                 <button
@@ -1257,7 +1268,7 @@ export default function ConfiguratorClient() {
                                     onClick={() => setSelectedId(null)}
                                     style={{ marginTop: '1rem', fontSize: '0.8rem' }}
                                 >
-                                    Închide Editarea
+                                    ÃŽnchide Editarea
                                 </button>
                             </div>
                         );
@@ -1280,7 +1291,8 @@ export default function ConfiguratorClient() {
                     justifyContent: 'center',
                     position: 'relative',
                     overflow: 'auto',
-                    padding: '100px' // Overscroll area
+                    padding: '100px', // Overscroll area
+                    paddingLeft: '400px', // Reserve space for 80px sidebar + 300px tool panel + some breathing room
                 }}
             >
                 {/* Zoom Controls */}
@@ -1320,8 +1332,8 @@ export default function ConfiguratorClient() {
                     {elements.length === 0 && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
                             <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <div>Spațiu de Lucru</div>
-                            <div style={{ fontSize: '0.875rem' }}>Folosește meniul din stânga</div>
+                            <div>SpaÈ›iu de Lucru</div>
+                            <div style={{ fontSize: '0.875rem' }}>FoloseÈ™te meniul din stÃ¢nga</div>
                         </div>
                     )}
 
@@ -1345,9 +1357,15 @@ export default function ConfiguratorClient() {
                                     position: 'absolute',
                                     top: '20px',
                                     left: '20px',
+                                    x: el.x,
+                                    y: el.y,
                                     zIndex: selectedId === el.id ? 1000 : index,
                                     touchAction: 'none',
-                                    rotate: el.rotation || 0
+                                    rotate: el.rotation || 0,
+                                    transformOrigin: 'center center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}
                             >
                                 <div
@@ -1373,6 +1391,7 @@ export default function ConfiguratorClient() {
                                                         const delta = (corner.includes('e') ? info.delta.x : -info.delta.x) / 100;
                                                         updateElementStyle(el.id, 'scale', Math.max(0.1, (el.scale || 1) + delta));
                                                     }}
+                                                    onPointerDown={(e) => e.stopPropagation()}
                                                     style={{
                                                         position: 'absolute',
                                                         top: corner.includes('n') ? -8 : 'auto',
@@ -1387,28 +1406,10 @@ export default function ConfiguratorClient() {
                                                 />
                                             ))}
 
-                                            {/* Rotation Handle */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const currentRotation = el.rotation || 0;
-                                                    updateElementStyle(el.id, 'rotation', (currentRotation + 45) % 360);
-                                                }}
-                                                style={{
-                                                    position: 'absolute', top: -20, left: -20, width: 24, height: 24,
-                                                    borderRadius: '50%', background: 'white', color: 'var(--primary)',
-                                                    border: '2px solid var(--primary)', display: 'flex', alignItems: 'center',
-                                                    justifyContent: 'center', cursor: 'pointer', zIndex: 110,
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                                                }}
-                                                title="Rotește 45°"
-                                            >
-                                                <RotateCcw size={14} strokeWidth={3} />
-                                            </button>
-
                                             {/* Global Delete Button */}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
+                                                onPointerDown={(e) => e.stopPropagation()}
                                                 style={{
                                                     position: 'absolute', top: -20, right: -20, width: 24, height: 24,
                                                     borderRadius: '50%', background: '#ef4444', color: 'white',
@@ -1417,13 +1418,13 @@ export default function ConfiguratorClient() {
                                                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                                 }}
                                                 className="hover:bg-red-600 transition-colors"
-                                                title="Șterge element"
+                                                title="È˜terge element"
                                             >
                                                 <X size={14} strokeWidth={3} />
                                             </button>
                                         </>
                                     )}
-                                    {el.type === 'text' ? (
+                                                                       {el.type === 'text' ? (
                                         <div
                                             contentEditable
                                             suppressContentEditableWarning
@@ -1502,7 +1503,7 @@ export default function ConfiguratorClient() {
                                     fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                             >
-                                <Sparkles size={14} /> Reîmprospătează 3D
+                                <Sparkles size={14} /> ReÃ®mprospÄƒteazÄƒ 3D
                             </button>
                         </div>
                     )}
@@ -1522,8 +1523,8 @@ export default function ConfiguratorClient() {
                         style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '1rem', background: 'white' }}
                     >
                         <option value="canvas">Tablou Canvas</option>
-                        <option value="forex">Placă Forex (PVC)</option>
-                        <option value="acrylic">Sticlă Acrilică</option>
+                        <option value="forex">PlacÄƒ Forex (PVC)</option>
+                        <option value="acrylic">SticlÄƒ AcrilicÄƒ</option>
                     </select>
                 </div>
 
@@ -1663,12 +1664,12 @@ export default function ConfiguratorClient() {
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        <span>Preț:</span>
+                        <span>PreÈ›:</span>
                         <span>{price} Lei</span>
                     </div>
                     <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} onClick={handleAddToCart}>
                         <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
-                        Adaugă în Coș
+                        AdaugÄƒ Ã®n CoÈ™
                     </button>
                 </div>
             </aside>
@@ -1697,7 +1698,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <Copy size={14} />
-                            Duplică Element
+                            DuplicÄƒ Element
                         </button>
                         <button
                             onClick={() => bringToFront(contextMenu.elementId!)}
@@ -1705,7 +1706,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <ArrowUp size={14} />
-                            Adu în față
+                            Adu Ã®n faÈ›Äƒ
                         </button>
                         <button
                             onClick={() => sendToBack(contextMenu.elementId!)}
@@ -1713,7 +1714,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-accent hover:text-primary transition-colors flex items-center gap-2"
                         >
                             <ArrowDown size={14} />
-                            Trimite în spate
+                            Trimite Ã®n spate
                         </button>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '0.25rem 0' }} />
                         <button
@@ -1722,7 +1723,7 @@ export default function ConfiguratorClient() {
                             className="hover:bg-red-50 transition-colors flex items-center gap-2"
                         >
                             <X size={14} />
-                            Șterge Element
+                            È˜terge Element
                         </button>
                     </div>
                 )
@@ -1771,3 +1772,4 @@ export default function ConfiguratorClient() {
         </div >
     );
 }
+
