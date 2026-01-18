@@ -160,6 +160,9 @@ model DiscountCode {
   validFrom      DateTime  @default(now())
   validUntil     DateTime
   isActive       Boolean   @default(true)
+  configuratorId String?
+  category       String?
+  source         String?   @default("Visionboard")
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
