@@ -93,7 +93,6 @@ export default function ConfiguratorClient() {
             id: Math.random().toString(36).substr(2, 9),
             type,
             content,
-            content,
             x: 0,
             y: 0,
             fontSize: type === 'text' ? 24 : undefined,
@@ -108,6 +107,7 @@ export default function ConfiguratorClient() {
 
     const removeElement = (id: string) => {
         setElements(elements.filter(el => el.id !== id));
+        if (selectedId === id) setSelectedId(null);
     };
 
     const handleTextChange = (id: string, newText: string) => {
@@ -221,165 +221,157 @@ export default function ConfiguratorClient() {
                 </div>
             )}
 
-        </>
-    )
-}
-                </div >
+            {/* Text Edit Panel (Activates when text selected or tool active) */}
+            {activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text' && (
+                <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
+
+                    {(() => {
+                        const el = elements.find(e => e.id === selectedId)!;
+                        return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {/* Culoare */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            type="color"
+                                            value={el.color || '#000000'}
+                                            onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
+                                            style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer' }}
+                                        />
+                                        <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem' }}>
+                                            {el.color}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Font Size */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime: {el.fontSize}px</label>
+                                    <input
+                                        type="range"
+                                        min="12"
+                                        max="120"
+                                        value={el.fontSize || 24}
+                                        onChange={(e) => updateElementStyle(el.id, 'fontSize', parseInt(e.target.value))}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+
+                                {/* Font Family */}
+                                <div>
+                                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Font</label>
+                                    <select
+                                        value={el.fontFamily}
+                                        onChange={(e) => updateElementStyle(el.id, 'fontFamily', e.target.value)}
+                                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }}
+                                    >
+                                        {FONTS.map(f => (
+                                            <option key={f.value} value={f.value}>{f.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Buttons */}
+                                <button
+                                    className="btn btn-outline"
+                                    onClick={() => setSelectedId(null)}
+                                    style={{ marginTop: '1rem', fontSize: '0.8rem' }}
+                                >
+                                    Închide Editarea
+                                </button>
+                            </div>
+                        );
+                    })()}
+                </div>
             )}
 
-{/* Text Edit Panel (Activates when text selected or tool active) */ }
-{
-    activeTool === 'edit-text' && selectedId && elements.find(e => e.id === selectedId)?.type === 'text' && (
-        <div style={{ width: '250px', borderRight: '1px solid var(--border)', background: 'var(--surface)', padding: '1rem', zIndex: 9 }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Editare Text</h3>
-
-            {(() => {
-                const el = elements.find(e => e.id === selectedId)!;
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {/* Culoare */}
-                        <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Culoare</label>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    type="color"
-                                    value={el.color || '#000000'}
-                                    onChange={(e) => updateElementStyle(el.id, 'color', e.target.value)}
-                                    style={{ width: '40px', height: '40px', padding: 0, border: 'none', cursor: 'pointer' }}
-                                />
-                                <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem', fontSize: '0.9rem' }}>
-                                    {el.color}
-                                </div>
-                            </div>
+            {/* Main Canvas Area */}
+            <main style={{ flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{
+                    width: '600px',
+                    height: '400px',
+                    background: background,
+                    transition: 'background 0.3s ease',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    {elements.length === 0 && (
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
+                            <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                            <div>Spațiu de Lucru</div>
+                            <div style={{ fontSize: '0.875rem' }}>Folosește meniul din stânga</div>
                         </div>
-
-                        {/* Font Size */}
-                        <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Mărime: {el.fontSize}px</label>
-                            <input
-                                type="range"
-                                min="12"
-                                max="120"
-                                value={el.fontSize || 24}
-                                onChange={(e) => updateElementStyle(el.id, 'fontSize', parseInt(e.target.value))}
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-
-                        {/* Font Family */}
-                        <div>
-                            <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Font</label>
-                            <select
-                                value={el.fontFamily}
-                                onChange={(e) => updateElementStyle(el.id, 'fontFamily', e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }}
-                            >
-                                {FONTS.map(f => (
-                                    <option key={f.value} value={f.value}>{f.label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Buttons */}
-                        <button
-                            className="btn btn-outline"
-                            onClick={() => setSelectedId(null)}
-                            style={{ marginTop: '1rem', fontSize: '0.8rem' }}
-                        >
-                            Închide Editarea
-                        </button>
-                    </div>
-                );
-            })()}
-        </div>
-    )
-}
-<main style={{ flex: 1, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-    <div style={{
-        width: '600px',
-        height: '400px',
-        background: background,
-        transition: 'background 0.3s ease',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-        position: 'relative',
-        overflow: 'hidden'
-    }}>
-        {elements.length === 0 && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#cbd5e1', textAlign: 'center', pointerEvents: 'none' }}>
-                <Settings size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                <div>Spațiu de Lucru</div>
-                <div style={{ fontSize: '0.875rem' }}>Folosește meniul din stânga</div>
-            </div>
-        )}
-
-        {elements.map((el) => (
-            <motion.div
-                key={el.id}
-                drag
-                dragMomentum={false}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedId(el.id);
-                    if (el.type === 'text') setActiveTool('edit-text');
-                }}
-                style={{ position: 'absolute', top: '50%', left: '50%', cursor: 'move', zIndex: selectedId === el.id ? 10 : 1 }}
-            >
-                <div className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`} style={{ position: 'relative' }}>
-                    {el.type === 'text' ? (
-                        <div
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleTextChange(el.id, e.currentTarget.textContent || '')}
-                            style={{
-                                fontSize: `${el.fontSize || 24}px`,
-                                color: el.color || '#000000',
-                                fontFamily: el.fontFamily || 'inherit',
-                                fontWeight: 'bold',
-                                padding: '0.5rem',
-                                border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
-                                minWidth: '50px',
-                                textAlign: 'center',
-                                whiteSpace: 'nowrap',
-                                lineHeight: 1.2
-                            }}
-                            className="editable-text"
-                        >
-                            {el.content}
-                        </div>
-                    ) : (
-                        <img src={el.content} alt="uploaded" style={{ maxWidth: '200px', display: 'block' }} />
                     )}
 
-                    <button
-                        onClick={() => removeElement(el.id)}
-                        style={{
-                            position: 'absolute', top: '-10px', right: '-10px',
-                            background: 'white', borderRadius: '50%', width: '20px', height: '20px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: '1px solid #ef4444', color: '#ef4444', cursor: 'pointer',
-                            padding: 0
-                        }}
-                        className="delete-btn"
-                    >
-                        <X size={12} />
-                    </button>
+                    {elements.map((el) => (
+                        <motion.div
+                            key={el.id}
+                            drag
+                            dragMomentum={false}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedId(el.id);
+                                if (el.type === 'text') setActiveTool('edit-text');
+                            }}
+                            style={{ position: 'absolute', top: '50%', left: '50%', cursor: 'move', zIndex: selectedId === el.id ? 10 : 1 }}
+                        >
+                            <div className={`element-wrapper ${selectedId === el.id ? 'selected' : ''}`} style={{ position: 'relative' }}>
+                                {el.type === 'text' ? (
+                                    <div
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) => handleTextChange(el.id, e.currentTarget.textContent || '')}
+                                        style={{
+                                            fontSize: `${el.fontSize || 24}px`,
+                                            color: el.color || '#000000',
+                                            fontFamily: el.fontFamily || 'inherit',
+                                            fontWeight: 'bold',
+                                            padding: '0.5rem',
+                                            border: selectedId === el.id ? '2px dashed var(--primary)' : '1px dashed transparent',
+                                            minWidth: '50px',
+                                            textAlign: 'center',
+                                            whiteSpace: 'nowrap',
+                                            lineHeight: 1.2
+                                        }}
+                                        className="editable-text"
+                                    >
+                                        {el.content}
+                                    </div>
+                                ) : (
+                                    <img src={el.content} alt="uploaded" style={{ maxWidth: '200px', display: 'block' }} />
+                                )}
+
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); removeElement(el.id); }}
+                                    style={{
+                                        position: 'absolute', top: '-10px', right: '-10px',
+                                        background: 'white', borderRadius: '50%', width: '20px', height: '20px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: '1px solid #ef4444', color: '#ef4444', cursor: 'pointer',
+                                        padding: 0
+                                    }}
+                                    className="delete-btn"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
-            </motion.div>
-        ))}
-    </div>
-</main>
+            </main>
 
-            </main >
-
-    {/* Click outside to deselect */ }
-    < div
-style = {{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
-onClick = {() => { setSelectedId(null); setActiveTool(null); }}
+            {/* Click outside to deselect */}
+            <div
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
+                onClick={() => { setSelectedId(null); setActiveTool(null); }}
             />
 
-{/* Product Options */ }
+            {/* Product Options */}
             <aside style={{ width: '320px', borderLeft: '1px solid var(--border)', padding: '1.5rem', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 600 }}>Configurare Produs</h2>
 
@@ -469,7 +461,16 @@ onClick = {() => { setSelectedId(null); setActiveTool(null); }}
         .element-wrapper:hover .delete-btn {
             opacity: 1;
         }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
       `}</style>
-        </div >
+        </div>
     );
 }
