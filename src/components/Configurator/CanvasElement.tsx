@@ -92,7 +92,7 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({
                                     bottom: corner.includes('s') ? -8 : 'auto',
                                     left: corner.includes('w') ? -8 : 'auto',
                                     right: corner.includes('e') ? -8 : 'auto',
-                                    width: 16, height: 16, background: 'white',
+                                    width: 24, height: 24, background: 'white',
                                     border: '2px solid var(--primary)', borderRadius: '50%',
                                     cursor: corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize',
                                     zIndex: 110, boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -105,7 +105,7 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({
                             onClick={(e) => { e.stopPropagation(); deleteElement(el.id); }}
                             onPointerDown={(e) => e.stopPropagation()}
                             style={{
-                                position: 'absolute', top: isMobile ? -25 : -20, right: isMobile ? -25 : -20, width: isMobile ? 32 : 24, height: isMobile ? 32 : 24,
+                                position: 'absolute', top: isMobile ? -30 : -20, right: isMobile ? -30 : -20, width: isMobile ? 36 : 24, height: isMobile ? 36 : 24,
                                 borderRadius: '50%', background: '#ef4444', color: 'white',
                                 border: '2px solid white', display: 'flex', alignItems: 'center',
                                 justifyContent: 'center', cursor: 'pointer', zIndex: 110,

@@ -326,6 +326,7 @@ export default function ConfiguratorClient() {
                 sendToBack={sendToBack}
                 deleteElement={deleteElement}
                 onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+                isMobile={isMobile}
             />
 
             <style jsx>{`
