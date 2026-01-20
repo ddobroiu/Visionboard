@@ -73,7 +73,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                 transition: 'padding 0.3s ease'
             }}
         >
-            <ZoomControls zoom={zoom} setZoom={setZoom} isMobile={isMobile} />
+            {!isMobile && <ZoomControls zoom={zoom} setZoom={setZoom} isMobile={isMobile} />}
             <div
                 style={{
                     width: orientation === 'landscape' ? '600px' : '400px',

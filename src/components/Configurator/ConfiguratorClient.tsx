@@ -56,6 +56,26 @@ export default function ConfiguratorClient() {
         setContextMenu
     } = useConfigurator();
 
+    // Auto-zoom for mobile to fit workspace
+    useEffect(() => {
+        if (isMobile) {
+            const calculateZoom = () => {
+                const workspaceWidth = orientation === 'landscape' ? 600 : 400;
+                // Padding 1rem each side (16px * 2 = 32px), plus some safety margin
+                const availableWidth = window.innerWidth - 40;
+                if (availableWidth > 0) {
+                    const newZoom = Math.min(availableWidth / workspaceWidth, 1);
+                    setZoom(newZoom);
+                }
+            };
+
+            calculateZoom();
+            // Recalculate on resize (e.g. orientation change on valid mobile implementation)
+            window.addEventListener('resize', calculateZoom);
+            return () => window.removeEventListener('resize', calculateZoom);
+        }
+    }, [isMobile, orientation, setZoom]);
+
     const modelViewerRef = useRef<any>(null);
 
     const { update3DTexture } = use3DPreview(
